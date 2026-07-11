@@ -192,21 +192,33 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 1.5rem;
   height: 76px;
 }
+.site-header .wrap {
+  max-width: calc(var(--wrap) * 0.7);
+}
+.nav-instagram {
+  display: inline-flex;
+  color: var(--muted);
+  transition: color 0.3s var(--ease-out-expo);
+}
+.nav-instagram:hover { color: var(--ink); }
 .wordmark {
   font-family: var(--font-display);
   font-size: 1.25rem;
   letter-spacing: 0.01em;
   color: var(--ink);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .main-nav {
   display: flex;
   align-items: center;
-  gap: clamp(1rem, 2vw, 2.25rem);
-  font-size: 1.05rem;
+  gap: clamp(0.65rem, 1.2vw, 1.35rem);
+  font-size: 0.92rem;
   font-family: var(--font-nav);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
 }
 .main-nav a:not(.btn) {
   position: relative;
@@ -318,15 +330,6 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
   gap: 1rem;
   margin-top: 1.75rem;
 }
-.hero-social {
-  display: inline-block;
-  margin-top: 1.75rem;
-  font-size: 0.9rem;
-  color: var(--muted);
-  border-bottom: 1px solid color-mix(in oklch, var(--muted) 40%, transparent);
-}
-.hero-social:hover { color: var(--accent); border-color: var(--accent); }
-
 .hero-portrait { display: flex; justify-content: center; }
 .portrait-frame {
   width: min(494px, 100%);
