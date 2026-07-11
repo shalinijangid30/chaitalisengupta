@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Services — Chaitali Sengupta</title>
-<meta name="description" content="Bridal, party, HD and airbrush, editorial and celebrity makeup services by Chaitali Sengupta.">
+<title>Services &amp; Classes — Chaitali Sengupta</title>
+<meta name="description" content="Bridal, party, HD and airbrush, editorial and celebrity makeup services, plus makeup classes, by Chaitali Sengupta.">
 <link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,10 +24,8 @@
       <a href="index.html">Home</a>
       <a href="about.html">About</a>
       <a href="services.html" aria-current="page">Services</a>
-      <a href="classes.html">Classes</a>
       <a href="portfolio.html">Portfolio</a>
-      <a href="contact.html">Contact</a>
-      <a href="contact.html" class="btn btn-primary btn-small">Book Now</a>
+      <a href="portfolio.html#contact" class="btn btn-primary btn-small">Book Now</a>
     </nav>
 
     <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="main-nav" aria-label="Toggle menu">
@@ -39,11 +37,12 @@
 <main id="main">
 
   <div class="wrap page-header reveal">
-    <h1>Services</h1>
+    <h1>Services &amp; Classes</h1>
     <p>Every booking includes a pre-event consultation on skin prep, look, and timeline.</p>
   </div>
 
-  <section class="services">
+  <!-- ============ SERVICES ============ -->
+  <section class="services" id="services">
     <div class="wrap">
       <div class="service-list">
         <article class="service-row reveal">
@@ -98,9 +97,55 @@
           <span class="service-price">On request</span>
         </article>
       </div>
+    </div>
+  </section>
+
+  <!-- ============ CLASSES ============ -->
+  <section class="classes" id="classes">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <h2>Makeup Classes</h2>
+        <p>Small-batch and one-on-one training for beginners and working artists.</p>
+      </div>
+
+      <div class="class-list">
+        <article class="class-row reveal">
+          <div class="class-row-head">
+            <h3>Beginner Fundamentals</h3>
+            <span class="class-tag">Group &amp; 1:1</span>
+          </div>
+          <p>
+            Skin prep, colour theory, everyday and party makeup basics — for anyone
+            starting out, including brides who want to learn their own touch-up
+            routine.
+          </p>
+        </article>
+
+        <article class="class-row reveal">
+          <div class="class-row-head">
+            <h3>Professional Certification</h3>
+            <span class="class-tag">Working artists</span>
+          </div>
+          <p>
+            Bridal design, HD &amp; airbrush technique, kit-building, and client
+            handling for artists looking to turn makeup into a full-time practice.
+          </p>
+        </article>
+
+        <article class="class-row reveal">
+          <div class="class-row-head">
+            <h3>1:1 Mentorship</h3>
+            <span class="class-tag">Private</span>
+          </div>
+          <p>
+            Personalised sessions built around your portfolio, technique gaps, and
+            goals — in studio or on location.
+          </p>
+        </article>
+      </div>
 
       <div class="classes-cta reveal">
-        <a href="contact.html" class="btn btn-primary">Book a Consultation</a>
+        <a href="portfolio.html#contact" class="btn btn-primary">Book a Consultation</a>
       </div>
     </div>
   </section>
@@ -113,9 +158,9 @@
     <nav aria-label="Footer">
       <a href="about.html">About</a>
       <a href="services.html">Services</a>
-      <a href="classes.html">Classes</a>
+      <a href="services.html#classes">Classes</a>
       <a href="portfolio.html">Portfolio</a>
-      <a href="contact.html">Contact</a>
+      <a href="portfolio.html#contact">Contact</a>
     </nav>
     <a href="https://www.instagram.com/facesbychaitalisengupta/" target="_blank" rel="noopener" class="footer-instagram" aria-label="Instagram">
       <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="2.5" width="19" height="19" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.3" cy="6.7" r="1.1" fill="currentColor" stroke="none"/></svg>
