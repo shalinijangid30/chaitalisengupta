@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact — Chaitali Sengupta</title>
+<meta name="description" content="Book a consultation with Chaitali Sengupta for bridal, party, editorial makeup or makeup classes.">
+<link rel="icon" href="assets/images/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<a class="skip-link" href="#main">Skip to content</a>
+<div class="cursor-dot"></div>
+
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a href="index.html" class="wordmark">Chaitali Sengupta</a>
+
+    <nav class="main-nav" id="main-nav" aria-label="Primary">
+      <a href="index.html">Home</a>
+      <a href="about.html">About</a>
+      <a href="services.html">Services</a>
+      <a href="classes.html">Classes</a>
+      <a href="portfolio.html">Portfolio</a>
+      <a href="contact.html" aria-current="page">Contact</a>
+      <a href="contact.html" class="btn btn-primary btn-small">Book Now</a>
+    </nav>
+
+    <button class="nav-toggle" id="nav-toggle" aria-expanded="false" aria-controls="main-nav" aria-label="Toggle menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<main id="main">
+
+  <div class="wrap page-header reveal">
+    <h1>Book a Consultation</h1>
+    <p>Tell us about your date, event, and the look you have in mind — Chaitali will follow up to confirm availability.</p>
+  </div>
+
+  <section class="contact">
+    <div class="wrap contact-inner">
+      <div class="contact-copy reveal">
+        <ul class="contact-details">
+          <li>
+            <span class="contact-label">Phone / WhatsApp</span>
+            <a href="https://wa.me/910000000000" target="_blank" rel="noopener">+91 00000 00000</a>
+          </li>
+          <li>
+            <span class="contact-label">Email</span>
+            <a href="mailto:hello@chaitalisengupta.com">hello@chaitalisengupta.com</a>
+          </li>
+          <li>
+            <span class="contact-label">Instagram</span>
+            <a href="https://www.instagram.com/facesbychaitalisengupta/" target="_blank" rel="noopener">@facesbychaitalisengupta</a>
+          </li>
+          <li>
+            <span class="contact-label">Location</span>
+            <span>Available pan-India &middot; destination bookings on request</span>
+          </li>
+        </ul>
+      </div>
+
+      <form class="contact-form reveal" action="mailto:hello@chaitalisengupta.com" method="post" enctype="text/plain">
+        <div class="form-row">
+          <label for="name">Name</label>
+          <input type="text" id="name" name="Name" required autocomplete="name">
+        </div>
+        <div class="form-row">
+          <label for="phone">Phone or Email</label>
+          <input type="text" id="phone" name="Contact" required autocomplete="email">
+        </div>
+        <div class="form-row form-row-split">
+          <div>
+            <label for="event">Event Type</label>
+            <select id="event" name="Event Type">
+              <option>Bridal</option>
+              <option>Party / Occasion</option>
+              <option>Editorial / Celebrity</option>
+              <option>Makeup Class</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="date">Event Date</label>
+            <input type="date" id="date" name="Event Date">
+          </div>
+        </div>
+        <div class="form-row">
+          <label for="message">Tell us about your look</label>
+          <textarea id="message" name="Message" rows="4" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary btn-full">Send Enquiry</button>
+      </form>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <a href="index.html" class="wordmark">Chaitali Sengupta</a>
+    <nav aria-label="Footer">
+      <a href="about.html">About</a>
+      <a href="services.html">Services</a>
+      <a href="classes.html">Classes</a>
+      <a href="portfolio.html">Portfolio</a>
+      <a href="contact.html">Contact</a>
+    </nav>
+    <a href="https://www.instagram.com/facesbychaitalisengupta/" target="_blank" rel="noopener" class="footer-instagram" aria-label="Instagram">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2.5" y="2.5" width="19" height="19" rx="5"/><circle cx="12" cy="12" r="4.2"/><circle cx="17.3" cy="6.7" r="1.1" fill="currentColor" stroke="none"/></svg>
+    </a>
+  </div>
+  <p class="footer-copy">&copy; <span id="year"></span> Chaitali Sengupta. All rights reserved.</p>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>

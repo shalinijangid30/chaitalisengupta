@@ -1,0 +1,7 @@
+.DS_Store
+.claude/settings.local.json
+
+# Raw source photos/video (unoptimized originals — the site uses the
+# resized copies in assets/images/photos and assets/images/thumbs)
+Image-*.jpg
+Video-*.mp4

@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "static-site",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8420"],
+      "port": 8420
+    },
+    {
+      "name": "chkstepan-static",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8430", "--directory", "/Users/shalinijangid/Web-projects/chkstepan-portfolio"],
+      "port": 8430
+    }
+  ]
+}
