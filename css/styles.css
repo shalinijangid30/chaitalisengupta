@@ -93,6 +93,7 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
 /* ===================================================================
    Custom cursor
 =================================================================== */
+.cursor-dot { display: none; }
 @media (hover: hover) and (pointer: fine) {
   body { cursor: none; }
   a, button, input, textarea, select { cursor: none; }
@@ -114,7 +115,6 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
   }
   .cursor-dot.is-hidden { opacity: 0; }
 }
-.cursor-dot { display: none; }
 
 /* ===================================================================
    Reveal animation
@@ -134,7 +134,7 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
 .train-left,
 .train-right {
   opacity: 0;
-  transition: opacity 1.1s var(--ease-out-expo), transform 1.1s var(--ease-out-expo);
+  transition: opacity 1.86s var(--ease-out-expo), transform 1.86s var(--ease-out-expo);
   will-change: transform;
 }
 .train-left { transform: translateX(-42vw); }
@@ -184,20 +184,18 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
   position: sticky;
   top: 0;
   z-index: var(--z-nav);
-  background: color-mix(in oklch, var(--bg) 88%, transparent);
-  backdrop-filter: blur(10px);
+  background: var(--bg-deep);
   border-bottom: 1px solid var(--surface-2);
 }
 .header-inner {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
-  height: 76px;
+  column-gap: 1.5rem;
+  height: 56px;
 }
-.site-header .wrap {
-  max-width: calc(var(--wrap) * 0.7);
-}
+.header-inner .main-nav { justify-self: center; }
+.header-cta-desktop { justify-self: end; }
 .nav-instagram {
   display: inline-flex;
   color: var(--muted);
@@ -241,6 +239,8 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
 
 .nav-toggle {
   display: none;
+  grid-column: 3;
+  justify-self: end;
   flex-direction: column;
   justify-content: center;
   gap: 5px;
@@ -250,6 +250,7 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
   border: none;
   padding: 0;
 }
+.header-cta-mobile { display: none; }
 .nav-toggle span {
   display: block;
   height: 1.5px;
@@ -267,8 +268,13 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
 .hero {
   position: relative;
   overflow: hidden;
-  padding-block: clamp(3.5rem, 9vw, 7rem);
+  min-height: calc(100vh - 56px);
+  min-height: calc(100dvh - 56px);
+  display: flex;
+  align-items: center;
+  padding-block: clamp(2rem, 6vw, 4rem);
 }
+.hero > .wrap { width: 100%; }
 .hero-arc {
   position: absolute;
   top: -30%;
@@ -303,8 +309,10 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
 }
 .hero-title-typewriter {
   font-family: var(--font-headline);
+  font-size: clamp(2.1rem, 4.4vw, 3.6rem);
   font-weight: 400;
   text-wrap: normal;
+  white-space: pre-line;
 }
 .typewriter-cursor {
   display: inline-block;
@@ -332,7 +340,8 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
 }
 .hero-portrait { display: flex; justify-content: center; }
 .portrait-frame {
-  width: min(494px, 100%);
+  width: min(494px, 100%, 51vh);
+  max-height: 68vh;
   aspect-ratio: 3/4;
   border-radius: 286px 286px 16px 16px;
   overflow: hidden;
@@ -388,6 +397,18 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
   grid-template-columns: 0.85fr 1.15fr;
   gap: clamp(2rem, 6vw, 4.5rem);
   align-items: start;
+}
+.about-inner-text-only {
+  grid-template-columns: 1fr;
+  max-width: 62ch;
+  margin-inline: auto;
+  text-align: center;
+}
+.about-inner-text-only .hero-actions { justify-content: center; }
+.about-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 .portrait-block {
   aspect-ratio: 4/5;
@@ -644,11 +665,11 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
 @media (max-width: 720px) {
   .main-nav {
     position: fixed;
-    top: 76px;
+    top: 56px;
     left: 0;
     right: 0;
-    height: calc(100vh - 76px);
-    height: calc(100dvh - 76px);
+    height: calc(100vh - 56px);
+    height: calc(100dvh - 56px);
     background: var(--bg);
     flex-direction: column;
     justify-content: flex-start;
@@ -663,5 +684,7 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
   }
   .main-nav.is-open { transform: translateX(0); }
   .nav-toggle { display: flex; }
+  .header-cta-desktop { display: none; }
+  .header-cta-mobile { display: inline-flex; }
   .form-row-split { grid-template-columns: 1fr; }
 }
