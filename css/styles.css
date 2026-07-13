@@ -520,10 +520,14 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
   background: var(--surface);
   opacity: 0;
   transform: translateX(-24px);
-  transition: opacity 0.6s var(--ease-out-expo) var(--card-delay, 0ms),
-    transform 0.6s var(--ease-out-expo) var(--card-delay, 0ms);
+  transition: opacity 0.5s var(--ease-out-expo), transform 0.5s var(--ease-out-expo);
 }
-.portfolio-marquee.is-visible .portfolio-marquee-card {
+/* Cards are opened one by one from JS, keyed to how far the hero photo
+   has travelled left — each .is-open marks another slot of space made.
+   Once the marquee is scrolling, every card (loop duplicates included)
+   stays open. */
+.portfolio-marquee-card.is-open,
+.portfolio-marquee.is-scrolling .portfolio-marquee-card {
   opacity: 1;
   transform: translateX(0);
 }

@@ -58,23 +58,61 @@
       'IntersectionObserver' in window &&
       window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 
+    // Lets the fallback observer below check whether the cursor
+    // choreography has taken charge of the marquee reveal.
+    let choreographyEngaged = () => false;
+
     if (!canFollowCursor) {
       followPhoto.remove();
       portfolioMarquee.classList.add('is-visible', 'is-scrolling');
     } else {
       const SETTLE_EPSILON = 0.5;
       const LERP = 0.14; // one shared pace for every phase, every axis
+      const REVEAL_COUNT = 9; // unique cards; loop duplicates follow via is-scrolling
 
       // The photo's glued column matches the 3rd marquee card exactly —
       // same X center, same width — so when it eventually docks, it's
       // already living on the marquee's own grid.
-      const thirdCard = portfolioMarquee.querySelectorAll('.portfolio-marquee-card')[2];
+      const marqueeCards = Array.from(portfolioMarquee.querySelectorAll('.portfolio-marquee-card'));
+      const thirdCard = marqueeCards[2];
 
       const glueColumn = () => {
         const r = thirdCard.getBoundingClientRect();
-        // Cards not yet revealed sit 24px left of their resting spot.
-        const comp = portfolioMarquee.classList.contains('is-visible') ? 0 : 24;
+        // A card not yet opened sits 24px left of its resting spot.
+        const comp =
+          thirdCard.classList.contains('is-open') ||
+          portfolioMarquee.classList.contains('is-scrolling')
+            ? 0
+            : 24;
         return { x: r.left + comp + r.width / 2, w: r.width };
+      };
+
+      // While cursor-following, the photo stays inside the About copy:
+      // never above the "About Chaitali" heading, never below the
+      // "Book a Consultation" button. Both bounds are live rects, so
+      // once the button scrolls up the photo rides along with the page
+      // at the same momentum instead of staying glued mid-viewport.
+      const aboutHeading = document.querySelector('.page-header');
+      const consultButton = document.querySelector('.about-copy .hero-actions');
+
+      const clampFollowY = (y) => {
+        const half = followPhoto.getBoundingClientRect().height / 2 || 150;
+        let max = Infinity;
+        if (consultButton) max = consultButton.getBoundingClientRect().bottom - half;
+        if (aboutHeading) y = Math.max(y, aboutHeading.getBoundingClientRect().top + half);
+        return Math.min(y, max);
+      };
+
+      // Opens one card of space for every stretch of leftward travel:
+      // the further the photo has moved along -x, the more slots open.
+      const openCardsByProgress = (anchorRect) => {
+        const rightEnd = glueColumn().x;
+        const leftEnd = anchorRect.left + anchorRect.width / 2;
+        const span = rightEnd - leftEnd;
+        const p = span > 0 ? Math.min(Math.max((rightEnd - currentX) / span, 0), 1) : 1;
+        marqueeCards.forEach((card, i) => {
+          card.classList.toggle('is-open', i < p * REVEAL_COUNT);
+        });
       };
 
       // Everything moves through one lerp loop — X, Y, and width all
@@ -89,6 +127,7 @@
 
       // Modes: follow → dockingY → dockingX → anchored → returningX → follow
       let mode = 'follow';
+      choreographyEngaged = () => mode !== 'follow';
 
       window.addEventListener('mousemove', (e) => {
         cursorY = e.clientY;
@@ -116,7 +155,7 @@
             const c = glueColumn();
             targetX = c.x;
             targetW = c.w;
-            targetY = cursorY;
+            targetY = clampFollowY(cursorY);
           } else if (mode === 'dockingY') {
             // Straight down the glued column to the marquee's baseline.
             const c = glueColumn();
@@ -125,11 +164,12 @@
             targetY = anchorRect.top + anchorRect.height / 2;
             if (Math.abs(targetY - currentY) < SETTLE_EPSILON) mode = 'dockingX';
           } else if (mode === 'dockingX') {
-            // Straight left onto the anchor slot while the cards open.
-            portfolioMarquee.classList.add('is-visible');
+            // Straight left onto the anchor slot; every stretch of
+            // leftward travel opens another card of space behind it.
             targetX = anchorRect.left + anchorRect.width / 2;
             targetW = anchorRect.width;
             targetY = anchorRect.top + anchorRect.height / 2;
+            openCardsByProgress(anchorRect);
             if (
               Math.abs(targetX - currentX) < SETTLE_EPSILON &&
               Math.abs(targetY - currentY) < SETTLE_EPSILON
@@ -137,10 +177,12 @@
               settleInAnchor();
             }
           } else if (mode === 'returningX') {
-            // Straight right, back to the glued column, marquee closing.
+            // Straight right, back to the glued column — the cards
+            // close one by one as the space they had is taken back.
             const c = glueColumn();
             targetX = c.x;
             targetW = c.w;
+            openCardsByProgress(anchorRect);
             if (Math.abs(targetX - currentX) < SETTLE_EPSILON) mode = 'follow';
           }
 
@@ -183,7 +225,14 @@
           entries.forEach((entry) => {
             if (entry.isIntersecting) {
               if (mode === 'follow' || mode === 'returningX') dockForward();
-            } else if (mode !== 'follow' && mode !== 'returningX') {
+            } else if (
+              mode !== 'follow' &&
+              mode !== 'returningX' &&
+              entry.boundingClientRect.top > 0
+            ) {
+              // Undock only when the trigger drops below the dock zone —
+              // i.e. the visitor scrolled back up. Scrolling deeper down
+              // (trigger exiting past the top) keeps the photo anchored.
               dockBack();
             }
           });
@@ -195,14 +244,16 @@
 
     // Safety net — guarantees the marquee reveals once it scrolls into
     // view even if the cursor-follow/dock sequence above never fires.
-    // Waits out the normal dock duration first so it never races ahead
-    // of (or visibly duplicates) that choreography in the working case.
+    // It stands down whenever the choreography has taken charge, so it
+    // can never force the cards open mid-glide.
     const marqueeFallbackObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             setTimeout(() => {
-              portfolioMarquee.classList.add('is-visible', 'is-scrolling');
+              if (!choreographyEngaged() && !portfolioMarquee.classList.contains('is-scrolling')) {
+                portfolioMarquee.classList.add('is-visible', 'is-scrolling');
+              }
             }, 2200);
             marqueeFallbackObserver.unobserve(entry.target);
           }
