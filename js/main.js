@@ -165,18 +165,23 @@
             // carousel that isn't even in the viewport yet.
             if (anchorRect.top <= currentY) {
               mode = 'dockingX';
-              portfolioMarquee.classList.add('is-visible', 'is-scrolling');
+              portfolioMarquee.classList.add('is-visible');
             }
           } else if (mode === 'dockingX') {
             // Straight left onto the anchor slot; every stretch of
             // leftward travel opens another card of space behind it.
+            // is-scrolling isn't added until settleInAnchor() — it forces
+            // every card to full opacity, which would otherwise short-
+            // circuit this one-by-one reveal and make the whole carousel
+            // pop in at once instead of easing in behind the photo.
             targetX = anchorRect.left + anchorRect.width / 2;
             targetW = anchorRect.width;
             targetY = anchorRect.top + anchorRect.height / 2;
             openCardsByProgress(anchorRect);
             if (
               Math.abs(targetX - currentX) < SETTLE_EPSILON &&
-              Math.abs(targetY - currentY) < SETTLE_EPSILON
+              Math.abs(targetY - currentY) < SETTLE_EPSILON &&
+              Math.abs(targetW - currentW) < SETTLE_EPSILON
             ) {
               settleInAnchor();
             }
