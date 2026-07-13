@@ -525,7 +525,10 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
   background: var(--surface);
   opacity: 0;
   transform: translateX(-24px);
-  transition: opacity 0.5s var(--ease-out-expo), transform 0.5s var(--ease-out-expo);
+  /* No transition here on purpose — is-open is toggled every frame in
+     lockstep with the photo's leftward progress (openCardsByProgress),
+     so each card should snap to full opacity the instant its space
+     opens rather than lag behind on its own separate ease. */
 }
 /* Cards are opened one by one from JS, keyed to how far the hero photo
    has travelled left — each .is-open marks another slot of space made.
