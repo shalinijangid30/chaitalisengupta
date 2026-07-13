@@ -70,7 +70,8 @@
       portfolioMarquee.classList.add('is-visible', 'is-scrolling');
     } else {
       const SETTLE_EPSILON = 0.5;
-      const LERP = 0.14; // one shared pace for every phase, every axis
+      const LERP = 0.14; // pace for the follow hold and the vertical drop
+      const DOCK_LERP = 0.07; // slower, gentler pace easing into the anchor slot
       const REVEAL_COUNT = 9; // unique cards; loop duplicates follow via is-scrolling
 
       // The photo's glued column matches the 3rd marquee card exactly —
@@ -131,7 +132,7 @@
       // one it has reached, instead of it drifting indefinitely.
       const initialY = currentY;
 
-      // Modes: follow → dockingX → anchored → returningX → follow
+      // Modes: follow → dockingY → dockingX → anchored → returningX → follow
       let mode = 'follow';
       choreographyEngaged = () => mode !== 'follow';
 
@@ -164,12 +165,24 @@
             // the leftward dock begin, so it never lurches toward a
             // carousel that isn't even in the viewport yet.
             if (anchorRect.top <= currentY) {
-              mode = 'dockingX';
+              mode = 'dockingY';
               portfolioMarquee.classList.add('is-visible');
             }
+          } else if (mode === 'dockingY') {
+            // Keep gliding straight down the glued column — past the
+            // anchor's top edge — until the photo's own base reaches the
+            // marquee's base line, like it's settling onto the shelf
+            // before it slides in.
+            const c = glueColumn();
+            targetX = c.x;
+            targetW = c.w;
+            const half = (currentW * 1.25) / 2; // aspect-ratio 4/5
+            targetY = anchorRect.bottom - half;
+            if (Math.abs(targetY - currentY) < SETTLE_EPSILON) mode = 'dockingX';
           } else if (mode === 'dockingX') {
-            // Straight left onto the anchor slot; every stretch of
-            // leftward travel opens another card of space behind it.
+            // Straight left onto the anchor slot, easing in at a slower,
+            // gentler pace than the drop above; every stretch of leftward
+            // travel opens another card of space behind it.
             // is-scrolling isn't added until settleInAnchor() — it forces
             // every card to full opacity, which would otherwise short-
             // circuit this one-by-one reveal and make the whole carousel
@@ -195,9 +208,10 @@
             if (Math.abs(targetX - currentX) < SETTLE_EPSILON) mode = 'follow';
           }
 
-          currentX += (targetX - currentX) * LERP;
-          currentY += (targetY - currentY) * LERP;
-          currentW += (targetW - currentW) * LERP;
+          const rate = mode === 'dockingX' ? DOCK_LERP : LERP;
+          currentX += (targetX - currentX) * rate;
+          currentY += (targetY - currentY) * rate;
+          currentW += (targetW - currentW) * rate;
           // settleInAnchor() may have just switched to 'anchored' above —
           // it already clears these inline styles so the CSS .is-anchored
           // rule (inset: 0) can take over; don't stomp on that here.
