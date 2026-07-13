@@ -39,10 +39,12 @@
 
   // About + Portfolio hand-off — the first About photo is glued to the
   // right edge of the viewport and tracks the cursor vertically while the
-  // copy scrolls past, then docks diagonally onto the marquee's anchored
-  // first slot and stays there as the rest of the portfolio trains in and
-  // scrolls past it. Reversible: scrolling back up undocks it and it
-  // resumes following the cursor. Fine-pointer only.
+  // copy scrolls past. On reaching the trigger it travels straight down,
+  // then straight left onto the marquee's anchored first slot — an
+  // L-shaped path, not a diagonal — while the rest of the portfolio opens
+  // one card at a time behind it. Reversible: scrolling back up sends it
+  // right, then up, closing the marquee and resuming cursor-follow.
+  // Fine-pointer only.
   const followPhoto = document.getElementById('follow-photo');
   const portfolioEntryTrigger = document.getElementById('portfolio-entry-trigger');
   const portfolioMarquee = document.getElementById('portfolio-marquee');
@@ -58,7 +60,7 @@
       followPhoto.remove();
       portfolioMarquee.classList.add('is-visible', 'is-scrolling');
     } else {
-      const DOCK_MS = 2142;
+      const PHASE_MS = 1100;
       const HOME_WIDTH = 240;
 
       // Glued to the right edge — only the vertical position follows the
@@ -91,34 +93,39 @@
         clearTimeout(dockTimer);
 
         const rect = portfolioMarqueeAnchor.getBoundingClientRect();
-        followPhoto.classList.remove('is-anchored');
-        followPhoto.classList.add('is-following', 'is-docking');
-        followPhoto.style.left = rect.left + rect.width / 2 + 'px';
-        followPhoto.style.top = rect.top + rect.height / 2 + 'px';
-        followPhoto.style.width = rect.width + 'px';
 
-        // Reveal the marquee row right away so it never stays invisible
-        // waiting on the diagonal-dock animation to finish.
-        portfolioMarquee.classList.add('is-visible');
+        // Phase 1 — straight down, staying glued to the right edge.
+        followPhoto.classList.remove('is-anchored', 'is-shifting-horizontal');
+        followPhoto.classList.add('is-following', 'is-shifting-vertical');
+        followPhoto.style.top = rect.top + rect.height / 2 + 'px';
 
         dockTimer = setTimeout(() => {
-          followPhoto.classList.remove('is-following', 'is-docking');
-          followPhoto.classList.add('is-anchored');
-          followPhoto.style.left = '';
-          followPhoto.style.top = '';
-          followPhoto.style.width = '';
-          portfolioMarqueeAnchor.appendChild(followPhoto);
-          portfolioMarquee.classList.add('is-scrolling');
-        }, DOCK_MS);
+          // Phase 2 — straight left onto the anchor slot. The portfolio
+          // cards open one after another as it travels.
+          followPhoto.classList.remove('is-shifting-vertical');
+          followPhoto.classList.add('is-shifting-horizontal');
+          followPhoto.style.left = rect.left + rect.width / 2 + 'px';
+          followPhoto.style.width = rect.width + 'px';
+          portfolioMarquee.classList.add('is-visible');
+
+          dockTimer = setTimeout(() => {
+            followPhoto.classList.remove('is-following', 'is-shifting-horizontal');
+            followPhoto.classList.add('is-anchored');
+            followPhoto.style.left = '';
+            followPhoto.style.top = '';
+            followPhoto.style.width = '';
+            portfolioMarqueeAnchor.appendChild(followPhoto);
+            portfolioMarquee.classList.add('is-scrolling');
+          }, PHASE_MS);
+        }, PHASE_MS);
       };
 
       const dockBack = () => {
         anchored = false;
         clearTimeout(dockTimer);
-        portfolioMarquee.classList.remove('is-visible', 'is-scrolling');
+        portfolioMarquee.classList.remove('is-scrolling');
 
-        // Leave the anchor slot while still visually in place, then let the
-        // fixed-position transition slide it back up to the cursor.
+        // Leave the anchor slot while still visually in place.
         const rect = followPhoto.getBoundingClientRect();
         document.body.appendChild(followPhoto);
         followPhoto.classList.remove('is-anchored');
@@ -128,17 +135,25 @@
         followPhoto.style.width = rect.width + 'px';
 
         requestAnimationFrame(() => {
-          followPhoto.classList.add('is-docking');
+          // Phase 1 reverse — straight right, closing the marquee.
+          followPhoto.classList.add('is-shifting-horizontal');
           followPhoto.style.left = window.innerWidth - glueOffsetFromRight + 'px';
-          followPhoto.style.top = currentY + 'px';
           followPhoto.style.width = HOME_WIDTH + 'px';
+          portfolioMarquee.classList.remove('is-visible');
         });
 
         dockTimer = setTimeout(() => {
-          followPhoto.classList.remove('is-docking');
-          followPhoto.style.width = '';
-          following = true;
-        }, DOCK_MS);
+          // Phase 2 reverse — straight back up to the cursor.
+          followPhoto.classList.remove('is-shifting-horizontal');
+          followPhoto.classList.add('is-shifting-vertical');
+          followPhoto.style.top = currentY + 'px';
+
+          dockTimer = setTimeout(() => {
+            followPhoto.classList.remove('is-shifting-vertical');
+            followPhoto.style.width = '';
+            following = true;
+          }, PHASE_MS);
+        }, PHASE_MS);
       };
 
       const dockObserver = new IntersectionObserver(

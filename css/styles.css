@@ -415,8 +415,10 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
 /* ===================================================================
    About + Portfolio merge — the first About photo is glued to the
    right edge of the viewport and tracks the cursor vertically, then
-   docks diagonally onto the marquee's anchored first slot, where it
-   stays put as the rest of the portfolio scrolls past it.
+   travels straight down and straight left (an L-shaped path, not a
+   diagonal) onto the marquee's anchored first slot, where it stays put
+   as the rest of the portfolio opens one card at a time behind it.
+   Reversible: scrolling back up runs the same path in reverse.
 =================================================================== */
 .portfolio-split-trigger { height: 1px; }
 
@@ -436,9 +438,9 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
 }
 .follow-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .follow-photo.is-following { opacity: 1; }
-.follow-photo.is-docking {
-  transition: left 2.142s var(--ease-out-expo), top 2.142s var(--ease-out-expo),
-    width 2.142s var(--ease-out-expo);
+.follow-photo.is-shifting-vertical { transition: top 1.1s var(--ease-out-expo); }
+.follow-photo.is-shifting-horizontal {
+  transition: left 1.1s var(--ease-out-expo), width 1.1s var(--ease-out-expo);
 }
 /* Once anchored, the photo is reparented into the marquee's anchor slot
    and scrolls with the page instead of staying glued to the viewport. */
@@ -458,17 +460,13 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
 }
 
 /* Portfolio marquee — the anchored photo sits fixed at the left edge;
-   the rest of the portfolio trains in and scrolls past it endlessly. */
+   the rest of the portfolio opens one card after another, then scrolls
+   past it endlessly. */
 .portfolio-marquee {
   display: flex;
   gap: 14px;
   margin-top: 2.5rem;
-  opacity: 0;
-  transform: translateX(-30vw);
-  transition: opacity 1.3s var(--ease-out-expo), transform 1.3s var(--ease-out-expo);
-  will-change: transform;
 }
-.portfolio-marquee.is-visible { opacity: 1; transform: translateX(0); }
 .portfolio-marquee-anchor {
   position: relative;
   flex: 0 0 auto;
@@ -504,6 +502,14 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
   overflow: hidden;
   margin: 0;
   background: var(--surface);
+  opacity: 0;
+  transform: translateX(-24px);
+  transition: opacity 0.6s var(--ease-out-expo) var(--card-delay, 0ms),
+    transform 0.6s var(--ease-out-expo) var(--card-delay, 0ms);
+}
+.portfolio-marquee.is-visible .portfolio-marquee-card {
+  opacity: 1;
+  transform: translateX(0);
 }
 .portfolio-marquee-card img {
   width: 100%;
@@ -513,7 +519,7 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
 }
 .portfolio-marquee-card:hover img { transform: scale(1.05); }
 @media (prefers-reduced-motion: reduce) {
-  .portfolio-marquee { opacity: 1; transform: none; transition: none; }
+  .portfolio-marquee-card { opacity: 1; transform: none; transition: none; }
   .portfolio-marquee.is-scrolling .portfolio-marquee-track { animation: none; }
 }
 @media (max-width: 900px) {
