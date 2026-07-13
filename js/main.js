@@ -71,7 +71,7 @@
     } else {
       const SETTLE_EPSILON = 0.5;
       const LERP = 0.14; // pace for the follow hold and the vertical drop
-      const DOCK_LERP = 0.07; // slower, gentler pace easing into the anchor slot
+      const DOCK_LERP = 0.035; // slower, gentler pace easing into the anchor slot
       const REVEAL_COUNT = 9; // unique cards; loop duplicates follow via is-scrolling
 
       // The photo's glued column matches the 3rd marquee card exactly —
