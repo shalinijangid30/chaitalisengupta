@@ -438,8 +438,14 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
 }
 .follow-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .follow-photo.is-following { opacity: 1; }
-.follow-photo.is-shifting-vertical { transition: top 1.1s var(--ease-out-expo); }
+/* Straight-down phase — a single constant pace (linear, not eased) so
+   the photo never appears to drop or stutter partway through. */
+.follow-photo.is-shifting-vertical {
+  opacity: 1;
+  transition: top 1.1s linear;
+}
 .follow-photo.is-shifting-horizontal {
+  opacity: 1;
   transition: left 1.1s var(--ease-out-expo), width 1.1s var(--ease-out-expo);
 }
 /* Once anchored, the photo is reparented into the marquee's anchor slot
