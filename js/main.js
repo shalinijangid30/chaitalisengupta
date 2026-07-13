@@ -40,14 +40,16 @@
   // About + Portfolio hand-off — the first About photo is glued to the
   // right edge of the viewport and holds its initial aligned offset below
   // the About heading as the copy scrolls past (clamped so it never rises
-  // above the heading or drops below the consult button). On reaching the
-  // trigger it keeps using that very same glide — just re-aimed at the
-  // marquee's baseline instead of the scroll offset — so the descent never
-  // "drops" or changes pace. Once it settles on the baseline it shifts
-  // straight left onto the marquee's anchored slot, while the rest of the
-  // portfolio opens one card at a time behind it. Reversible: scrolling
-  // back up shifts it right, closes the marquee, then hands control back
-  // to scroll tracking for the trip back up. Fine-pointer only.
+  // above the heading or drops below the consult button). It then simply
+  // holds that position while the user keeps scrolling — the portfolio
+  // section scrolls up toward it like any normal content. Only once the
+  // marquee's anchor slot has physically scrolled up to meet the photo's
+  // height does it shift left onto the anchored slot, while the rest of
+  // the portfolio opens one card at a time and the marquee starts
+  // scrolling behind it — the carousel reads as sliding in under the
+  // photo, never dropping down to meet it. Reversible: scrolling back up
+  // shifts it right, closes the marquee, then hands control back to
+  // scroll tracking for the trip back up. Fine-pointer only.
   const followPhoto = document.getElementById('follow-photo');
   const portfolioEntryTrigger = document.getElementById('portfolio-entry-trigger');
   const portfolioMarquee = document.getElementById('portfolio-marquee');
@@ -88,20 +90,17 @@
         return { x: r.left + comp + r.width / 2, w: r.width };
       };
 
-      // While cursor-following, the photo stays inside the About copy:
-      // never above the "About Chaitali" heading, never below the
-      // "Book a Consultation" button. Both bounds are live rects, so
-      // once the button scrolls up the photo rides along with the page
-      // at the same momentum instead of staying glued mid-viewport.
+      // The photo holds its initial aligned Y for the entire wait phase —
+      // it does not track scroll at all — so it reads as pinned in place
+      // while the page (and eventually the carousel) scrolls underneath
+      // it. The only live bound left is a safety floor: never above the
+      // "About Chaitali" heading, in case initialY is ever computed above it.
       const aboutHeading = document.querySelector('.page-header');
-      const consultButton = document.querySelector('.about-copy .hero-actions');
 
       const clampFollowY = (y) => {
         const half = followPhoto.getBoundingClientRect().height / 2 || 150;
-        let max = Infinity;
-        if (consultButton) max = consultButton.getBoundingClientRect().bottom - half;
         if (aboutHeading) y = Math.max(y, aboutHeading.getBoundingClientRect().top + half);
-        return Math.min(y, max);
+        return y;
       };
 
       // Opens one card of space for every stretch of leftward travel:
@@ -132,7 +131,7 @@
       // one it has reached, instead of it drifting indefinitely.
       const initialY = currentY;
 
-      // Modes: follow → dockingY → dockingX → anchored → returningX → follow
+      // Modes: follow → dockingX → anchored → returningX → follow
       let mode = 'follow';
       choreographyEngaged = () => mode !== 'follow';
 
@@ -159,13 +158,15 @@
             targetX = c.x;
             targetW = c.w;
             targetY = clampFollowY(initialY);
-          } else if (mode === 'dockingY') {
-            // Straight down the glued column to the marquee's baseline.
-            const c = glueColumn();
-            targetX = c.x;
-            targetW = c.w;
-            targetY = anchorRect.top + anchorRect.height / 2;
-            if (Math.abs(targetY - currentY) < SETTLE_EPSILON) mode = 'dockingX';
+            // The photo just holds this position — no target-chasing —
+            // while the user scrolls normally. Only once the anchor slot
+            // has physically scrolled up to the photo's own height does
+            // the leftward dock begin, so it never lurches toward a
+            // carousel that isn't even in the viewport yet.
+            if (anchorRect.top <= currentY) {
+              mode = 'dockingX';
+              portfolioMarquee.classList.add('is-visible', 'is-scrolling');
+            }
           } else if (mode === 'dockingX') {
             // Straight left onto the anchor slot; every stretch of
             // leftward travel opens another card of space behind it.
@@ -192,18 +193,18 @@
           currentX += (targetX - currentX) * LERP;
           currentY += (targetY - currentY) * LERP;
           currentW += (targetW - currentW) * LERP;
-          followPhoto.style.left = currentX + 'px';
-          followPhoto.style.top = currentY + 'px';
-          followPhoto.style.width = currentW + 'px';
+          // settleInAnchor() may have just switched to 'anchored' above —
+          // it already clears these inline styles so the CSS .is-anchored
+          // rule (inset: 0) can take over; don't stomp on that here.
+          if (mode !== 'anchored') {
+            followPhoto.style.left = currentX + 'px';
+            followPhoto.style.top = currentY + 'px';
+            followPhoto.style.width = currentW + 'px';
+          }
         }
         requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
-
-      const dockForward = () => {
-        if (mode === 'anchored') return;
-        mode = 'dockingY';
-      };
 
       const dockBack = () => {
         if (mode === 'anchored') {
@@ -223,12 +224,15 @@
         mode = 'returningX';
       };
 
+      // The forward dock is now triggered physically (see tick() above),
+      // not by scroll position of a trigger element. This observer only
+      // handles the reverse trip: undocking when the visitor scrolls
+      // back up past the dock zone.
       const dockObserver = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              if (mode === 'follow' || mode === 'returningX') dockForward();
-            } else if (
+            if (
+              !entry.isIntersecting &&
               mode !== 'follow' &&
               mode !== 'returningX' &&
               entry.boundingClientRect.top > 0
