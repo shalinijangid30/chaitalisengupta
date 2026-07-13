@@ -47,8 +47,8 @@
     <p>Bridal, editorial &amp; celebrity makeup artist — and makeup educator.</p>
   </div>
 
-  <section class="about">
-    <div class="wrap about-inner">
+  <section class="about about-portfolio-merge">
+    <div class="wrap about-inner about-inner-text-only">
       <div class="about-copy reveal">
         <p class="lede">
           A makeup artist known for elaborate bridal design work and polished
@@ -75,11 +75,113 @@
         <div class="hero-actions">
           <a href="contact.html" class="btn btn-primary">Book a Consultation</a>
         </div>
+
+        <!-- Marks the scroll point where the follow-photo docks and the portfolio trains in -->
+        <div id="portfolio-entry-trigger" class="portfolio-split-trigger" aria-hidden="true"></div>
       </div>
-      <div class="about-portrait reveal">
-        <div class="portrait-block">
-          <img src="assets/images/photos/reception-ivory-02.jpg" alt="Chaitali Sengupta bridal reception makeup portrait">
+    </div>
+  </section>
+
+  <!-- Cursor-following photo: glued to the right edge of the viewport,
+       tracking the cursor vertically while the About copy scrolls past,
+       then docks diagonally onto the marquee's anchored first slot. -->
+  <div class="follow-photo is-following" id="follow-photo" aria-hidden="true" style="left: 1262px; top: 311px;">
+    <img src="assets/images/photos/reception-ivory-02.jpg" alt="">
+  </div>
+
+  <!-- ============ PORTFOLIO (revealed by the follow-photo dock) ============ -->
+  <section class="portfolio" id="portfolio">
+    <div class="wrap">
+      <div class="section-head reveal">
+        <h2>Portfolio</h2>
+        <p>Bridal, festive, editorial and reception work. Full portfolio on Instagram.</p>
+      </div>
+
+      <div class="portfolio-marquee" id="portfolio-marquee">
+        <div class="portfolio-marquee-anchor" id="portfolio-marquee-anchor" aria-hidden="true"></div>
+        <div class="portfolio-marquee-viewport">
+        <div class="portfolio-marquee-track">
+          <figure class="portfolio-marquee-card">
+            <img src="assets/images/thumbs/bridal-emerald-01.jpg" alt="Bridal makeup, emerald jewellery and veil">
+            <figcaption class="gallery-scrim"><span class="gallery-tag">Bridal</span></figcaption>
+          </figure>
+          <figure class="portfolio-marquee-card">
+            <img src="assets/images/thumbs/bridal-emerald-02.jpg" alt="Bridal makeup detail, emerald choker">
+            <figcaption class="gallery-scrim"><span class="gallery-tag">Bridal</span></figcaption>
+          </figure>
+          <figure class="portfolio-marquee-card">
+            <img src="assets/images/thumbs/editorial-silver-sequin.jpg" alt="Editorial makeup, silver sequin cape">
+            <figcaption class="gallery-scrim"><span class="gallery-tag">Editorial</span></figcaption>
+          </figure>
+          <figure class="portfolio-marquee-card">
+            <img src="assets/images/thumbs/reception-navy-gown.jpg" alt="Reception makeup, navy gown">
+            <figcaption class="gallery-scrim"><span class="gallery-tag">Reception</span></figcaption>
+          </figure>
+          <figure class="portfolio-marquee-card">
+            <img src="assets/images/thumbs/festive-gold-01.jpg" alt="Festive gold beaded makeup look">
+            <figcaption class="gallery-scrim"><span class="gallery-tag">Festive</span></figcaption>
+          </figure>
+          <figure class="portfolio-marquee-card">
+            <img src="assets/images/thumbs/reception-ivory-01.jpg" alt="Reception makeup, ivory embellished blouse">
+            <figcaption class="gallery-scrim"><span class="gallery-tag">Reception</span></figcaption>
+          </figure>
+          <figure class="portfolio-marquee-card">
+            <img src="assets/images/thumbs/party-navy-corset.jpg" alt="Party makeup, navy corset look">
+            <figcaption class="gallery-scrim"><span class="gallery-tag">Party</span></figcaption>
+          </figure>
+          <figure class="portfolio-marquee-card">
+            <img src="assets/images/thumbs/festive-gold-02.jpg" alt="Festive gold beaded makeup, doorway portrait">
+            <figcaption class="gallery-scrim"><span class="gallery-tag">Festive</span></figcaption>
+          </figure>
+          <figure class="portfolio-marquee-card">
+            <img src="assets/images/thumbs/reception-ivory-02.jpg" alt="Reception makeup, ivory saree-style look">
+            <figcaption class="gallery-scrim"><span class="gallery-tag">Reception</span></figcaption>
+          </figure>
+          <!-- duplicated for a seamless loop -->
+          <figure class="portfolio-marquee-card" aria-hidden="true">
+            <img src="assets/images/thumbs/bridal-emerald-01.jpg" alt="">
+            <figcaption class="gallery-scrim"><span class="gallery-tag">Bridal</span></figcaption>
+          </figure>
+          <figure class="portfolio-marquee-card" aria-hidden="true">
+            <img src="assets/images/thumbs/bridal-emerald-02.jpg" alt="">
+            <figcaption class="gallery-scrim"><span class="gallery-tag">Bridal</span></figcaption>
+          </figure>
+          <figure class="portfolio-marquee-card" aria-hidden="true">
+            <img src="assets/images/thumbs/editorial-silver-sequin.jpg" alt="">
+            <figcaption class="gallery-scrim"><span class="gallery-tag">Editorial</span></figcaption>
+          </figure>
+          <figure class="portfolio-marquee-card" aria-hidden="true">
+            <img src="assets/images/thumbs/reception-navy-gown.jpg" alt="">
+            <figcaption class="gallery-scrim"><span class="gallery-tag">Reception</span></figcaption>
+          </figure>
+          <figure class="portfolio-marquee-card" aria-hidden="true">
+            <img src="assets/images/thumbs/festive-gold-01.jpg" alt="">
+            <figcaption class="gallery-scrim"><span class="gallery-tag">Festive</span></figcaption>
+          </figure>
+          <figure class="portfolio-marquee-card" aria-hidden="true">
+            <img src="assets/images/thumbs/reception-ivory-01.jpg" alt="">
+            <figcaption class="gallery-scrim"><span class="gallery-tag">Reception</span></figcaption>
+          </figure>
+          <figure class="portfolio-marquee-card" aria-hidden="true">
+            <img src="assets/images/thumbs/party-navy-corset.jpg" alt="">
+            <figcaption class="gallery-scrim"><span class="gallery-tag">Party</span></figcaption>
+          </figure>
+          <figure class="portfolio-marquee-card" aria-hidden="true">
+            <img src="assets/images/thumbs/festive-gold-02.jpg" alt="">
+            <figcaption class="gallery-scrim"><span class="gallery-tag">Festive</span></figcaption>
+          </figure>
+          <figure class="portfolio-marquee-card" aria-hidden="true">
+            <img src="assets/images/thumbs/reception-ivory-02.jpg" alt="">
+            <figcaption class="gallery-scrim"><span class="gallery-tag">Reception</span></figcaption>
+          </figure>
         </div>
+        </div>
+      </div>
+
+      <div class="portfolio-cta reveal">
+        <a href="https://www.instagram.com/facesbychaitalisengupta/" target="_blank" rel="noopener" class="btn btn-outline">
+          See More on Instagram
+        </a>
       </div>
     </div>
   </section>

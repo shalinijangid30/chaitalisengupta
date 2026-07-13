@@ -37,6 +37,145 @@
   const yearEl = document.getElementById('year');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
+  // About + Portfolio hand-off — the first About photo is glued to the
+  // right edge of the viewport and tracks the cursor vertically while the
+  // copy scrolls past, then docks diagonally onto the marquee's anchored
+  // first slot and stays there as the rest of the portfolio trains in and
+  // scrolls past it. Reversible: scrolling back up undocks it and it
+  // resumes following the cursor. Fine-pointer only.
+  const followPhoto = document.getElementById('follow-photo');
+  const portfolioEntryTrigger = document.getElementById('portfolio-entry-trigger');
+  const portfolioMarquee = document.getElementById('portfolio-marquee');
+  const portfolioMarqueeAnchor = document.getElementById('portfolio-marquee-anchor');
+
+  if (followPhoto && portfolioEntryTrigger && portfolioMarquee && portfolioMarqueeAnchor) {
+    const canFollowCursor =
+      !prefersReducedMotion &&
+      'IntersectionObserver' in window &&
+      window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+    if (!canFollowCursor) {
+      followPhoto.remove();
+      portfolioMarquee.classList.add('is-visible', 'is-scrolling');
+    } else {
+      const DOCK_MS = 2142;
+      const HOME_WIDTH = 240;
+
+      // Glued to the right edge — only the vertical position follows the
+      // cursor. The offset is captured from the photo's starting position
+      // so it stays anchored the same distance from the right edge.
+      const glueOffsetFromRight = window.innerWidth - parseFloat(followPhoto.style.left || window.innerWidth * 0.876);
+      let targetY = parseFloat(followPhoto.style.top) || window.innerHeight / 3;
+      let currentY = targetY;
+      let following = true;
+      let anchored = false;
+      let dockTimer = null;
+
+      window.addEventListener('mousemove', (e) => {
+        targetY = e.clientY;
+      });
+
+      const tick = () => {
+        if (following) {
+          currentY += (targetY - currentY) * 0.14;
+          followPhoto.style.left = window.innerWidth - glueOffsetFromRight + 'px';
+          followPhoto.style.top = currentY + 'px';
+        }
+        requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+
+      const dockForward = () => {
+        following = false;
+        anchored = true;
+        clearTimeout(dockTimer);
+
+        const rect = portfolioMarqueeAnchor.getBoundingClientRect();
+        followPhoto.classList.remove('is-anchored');
+        followPhoto.classList.add('is-following', 'is-docking');
+        followPhoto.style.left = rect.left + rect.width / 2 + 'px';
+        followPhoto.style.top = rect.top + rect.height / 2 + 'px';
+        followPhoto.style.width = rect.width + 'px';
+
+        // Reveal the marquee row right away so it never stays invisible
+        // waiting on the diagonal-dock animation to finish.
+        portfolioMarquee.classList.add('is-visible');
+
+        dockTimer = setTimeout(() => {
+          followPhoto.classList.remove('is-following', 'is-docking');
+          followPhoto.classList.add('is-anchored');
+          followPhoto.style.left = '';
+          followPhoto.style.top = '';
+          followPhoto.style.width = '';
+          portfolioMarqueeAnchor.appendChild(followPhoto);
+          portfolioMarquee.classList.add('is-scrolling');
+        }, DOCK_MS);
+      };
+
+      const dockBack = () => {
+        anchored = false;
+        clearTimeout(dockTimer);
+        portfolioMarquee.classList.remove('is-visible', 'is-scrolling');
+
+        // Leave the anchor slot while still visually in place, then let the
+        // fixed-position transition slide it back up to the cursor.
+        const rect = followPhoto.getBoundingClientRect();
+        document.body.appendChild(followPhoto);
+        followPhoto.classList.remove('is-anchored');
+        followPhoto.classList.add('is-following');
+        followPhoto.style.left = rect.left + rect.width / 2 + 'px';
+        followPhoto.style.top = rect.top + rect.height / 2 + 'px';
+        followPhoto.style.width = rect.width + 'px';
+
+        requestAnimationFrame(() => {
+          followPhoto.classList.add('is-docking');
+          followPhoto.style.left = window.innerWidth - glueOffsetFromRight + 'px';
+          followPhoto.style.top = currentY + 'px';
+          followPhoto.style.width = HOME_WIDTH + 'px';
+        });
+
+        dockTimer = setTimeout(() => {
+          followPhoto.classList.remove('is-docking');
+          followPhoto.style.width = '';
+          following = true;
+        }, DOCK_MS);
+      };
+
+      const dockObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && !anchored) {
+              dockForward();
+            } else if (!entry.isIntersecting && anchored) {
+              dockBack();
+            }
+          });
+        },
+        { threshold: 0, rootMargin: '0px 0px -35% 0px' }
+      );
+      dockObserver.observe(portfolioEntryTrigger);
+    }
+
+    // Safety net — guarantees the marquee reveals once it scrolls into
+    // view even if the cursor-follow/dock sequence above never fires.
+    // Waits out the normal dock duration first so it never races ahead
+    // of (or visibly duplicates) that choreography in the working case.
+    const marqueeFallbackObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => {
+              portfolioMarquee.classList.add('is-visible', 'is-scrolling');
+            }, 2200);
+            marqueeFallbackObserver.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+    marqueeFallbackObserver.observe(portfolioMarquee);
+  }
+
   // Custom round cursor — fine pointer only, disabled under reduced motion.
   const canUseCustomCursor =
     window.matchMedia('(hover: hover) and (pointer: fine)').matches;
