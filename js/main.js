@@ -39,12 +39,14 @@
 
   // About + Portfolio hand-off — the first About photo is glued to the
   // right edge of the viewport and tracks the cursor vertically while the
-  // copy scrolls past. On reaching the trigger it travels straight down,
-  // then straight left onto the marquee's anchored first slot — an
-  // L-shaped path, not a diagonal — while the rest of the portfolio opens
-  // one card at a time behind it. Reversible: scrolling back up sends it
-  // right, then up, closing the marquee and resuming cursor-follow.
-  // Fine-pointer only.
+  // copy scrolls past. On reaching the trigger it keeps using that very
+  // same cursor-follow glide — just re-aimed at the marquee's baseline
+  // instead of the live cursor — so the descent never "drops" or changes
+  // pace. Once it settles on the baseline it shifts straight left onto
+  // the marquee's anchored slot, while the rest of the portfolio opens
+  // one card at a time behind it. Reversible: scrolling back up shifts it
+  // right, closes the marquee, then hands control back to live cursor
+  // tracking for the trip back up. Fine-pointer only.
   const followPhoto = document.getElementById('follow-photo');
   const portfolioEntryTrigger = document.getElementById('portfolio-entry-trigger');
   const portfolioMarquee = document.getElementById('portfolio-marquee');
@@ -62,6 +64,7 @@
     } else {
       const PHASE_MS = 1100;
       const HOME_WIDTH = 240;
+      const SETTLE_EPSILON = 0.5;
 
       // Glued to the right edge — only the vertical position follows the
       // cursor. The offset is captured from the photo's starting position
@@ -71,10 +74,11 @@
       let currentY = targetY;
       let following = true;
       let anchored = false;
+      let dockingToBaseline = false;
       let dockTimer = null;
 
       window.addEventListener('mousemove', (e) => {
-        targetY = e.clientY;
+        if (!dockingToBaseline) targetY = e.clientY;
       });
 
       const tick = () => {
@@ -82,46 +86,57 @@
           currentY += (targetY - currentY) * 0.14;
           followPhoto.style.left = window.innerWidth - glueOffsetFromRight + 'px';
           followPhoto.style.top = currentY + 'px';
+
+          if (dockingToBaseline && Math.abs(targetY - currentY) < SETTLE_EPSILON) {
+            dockingToBaseline = false;
+            shiftLeftOntoAnchor();
+          }
         }
         requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
 
-      const dockForward = () => {
+      const shiftLeftOntoAnchor = () => {
         following = false;
+        const rect = portfolioMarqueeAnchor.getBoundingClientRect();
+
+        // Straight left onto the anchor slot. The portfolio cards open
+        // one after another as it travels.
+        followPhoto.classList.add('is-shifting-horizontal');
+        followPhoto.style.left = rect.left + rect.width / 2 + 'px';
+        followPhoto.style.width = rect.width + 'px';
+        portfolioMarquee.classList.add('is-visible');
+
+        dockTimer = setTimeout(() => {
+          followPhoto.classList.remove('is-following', 'is-shifting-horizontal');
+          followPhoto.classList.add('is-anchored');
+          followPhoto.style.left = '';
+          followPhoto.style.top = '';
+          followPhoto.style.width = '';
+          portfolioMarqueeAnchor.appendChild(followPhoto);
+          portfolioMarquee.classList.add('is-scrolling');
+        }, PHASE_MS);
+      };
+
+      const dockForward = () => {
         anchored = true;
         clearTimeout(dockTimer);
 
         const rect = portfolioMarqueeAnchor.getBoundingClientRect();
 
-        // Phase 1 — straight down, staying glued to the right edge.
+        // Keep gliding down using the exact same cursor-follow lerp,
+        // just re-aimed at the marquee's baseline instead of the cursor —
+        // so there's no hand-off, no eased transition, no drop.
         followPhoto.classList.remove('is-anchored', 'is-shifting-horizontal');
-        followPhoto.classList.add('is-following', 'is-shifting-vertical');
-        followPhoto.style.top = rect.top + rect.height / 2 + 'px';
-
-        dockTimer = setTimeout(() => {
-          // Phase 2 — straight left onto the anchor slot. The portfolio
-          // cards open one after another as it travels.
-          followPhoto.classList.remove('is-shifting-vertical');
-          followPhoto.classList.add('is-shifting-horizontal');
-          followPhoto.style.left = rect.left + rect.width / 2 + 'px';
-          followPhoto.style.width = rect.width + 'px';
-          portfolioMarquee.classList.add('is-visible');
-
-          dockTimer = setTimeout(() => {
-            followPhoto.classList.remove('is-following', 'is-shifting-horizontal');
-            followPhoto.classList.add('is-anchored');
-            followPhoto.style.left = '';
-            followPhoto.style.top = '';
-            followPhoto.style.width = '';
-            portfolioMarqueeAnchor.appendChild(followPhoto);
-            portfolioMarquee.classList.add('is-scrolling');
-          }, PHASE_MS);
-        }, PHASE_MS);
+        followPhoto.classList.add('is-following');
+        following = true;
+        dockingToBaseline = true;
+        targetY = rect.top + rect.height / 2;
       };
 
       const dockBack = () => {
         anchored = false;
+        dockingToBaseline = false;
         clearTimeout(dockTimer);
         portfolioMarquee.classList.remove('is-scrolling');
 
@@ -133,9 +148,11 @@
         followPhoto.style.left = rect.left + rect.width / 2 + 'px';
         followPhoto.style.top = rect.top + rect.height / 2 + 'px';
         followPhoto.style.width = rect.width + 'px';
+        following = false;
+        currentY = rect.top + rect.height / 2;
 
         requestAnimationFrame(() => {
-          // Phase 1 reverse — straight right, closing the marquee.
+          // Shift straight right, closing the marquee.
           followPhoto.classList.add('is-shifting-horizontal');
           followPhoto.style.left = window.innerWidth - glueOffsetFromRight + 'px';
           followPhoto.style.width = HOME_WIDTH + 'px';
@@ -143,16 +160,11 @@
         });
 
         dockTimer = setTimeout(() => {
-          // Phase 2 reverse — straight back up to the cursor.
           followPhoto.classList.remove('is-shifting-horizontal');
-          followPhoto.classList.add('is-shifting-vertical');
-          followPhoto.style.top = currentY + 'px';
-
-          dockTimer = setTimeout(() => {
-            followPhoto.classList.remove('is-shifting-vertical');
-            followPhoto.style.width = '';
-            following = true;
-          }, PHASE_MS);
+          followPhoto.style.width = '';
+          // Hand control back to live cursor tracking — the same glide,
+          // just re-aimed at wherever the mouse actually is now.
+          following = true;
         }, PHASE_MS);
       };
 
