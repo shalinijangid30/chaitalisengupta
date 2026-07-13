@@ -71,7 +71,7 @@
     } else {
       const SETTLE_EPSILON = 0.5;
       const LERP = 0.14; // pace for the follow hold and the vertical drop
-      const DOCK_LERP = 0.014; // slower, gentler pace easing into the anchor slot
+      const DOCK_LERP = 0.010; // slower, gentler pace easing into the anchor slot
       const REVEAL_COUNT = 9; // unique cards; loop duplicates follow via is-scrolling
 
       // The photo's glued column matches the 3rd marquee card exactly —
@@ -276,24 +276,27 @@
       dockObserver.observe(portfolioEntryTrigger);
     }
 
-    // Safety net — guarantees the marquee reveals once it scrolls into
-    // view even if the cursor-follow/dock sequence above never fires.
-    // It stands down whenever the choreography has taken charge, so it
-    // can never force the cards open mid-glide.
+    // Safety net — guarantees the marquee reveals even if the cursor-
+    // follow/dock sequence above never fires (e.g. a JS error). Tied to
+    // an actual failure state rather than a fixed timer: it only fires
+    // once the marquee has scrolled entirely past the top of the
+    // viewport while still stuck in 'follow' — by that point the
+    // physical dock trigger should already have engaged, so if it
+    // hasn't, something upstream genuinely broke. A timer here would
+    // otherwise race normal scroll pacing and could slam every card
+    // open early if the visitor simply pauses or scrolls slowly.
     const marqueeFallbackObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setTimeout(() => {
-              if (!choreographyEngaged() && !portfolioMarquee.classList.contains('is-scrolling')) {
-                portfolioMarquee.classList.add('is-visible', 'is-scrolling');
-              }
-            }, 2200);
+          if (!entry.isIntersecting && entry.boundingClientRect.bottom < 0) {
+            if (!choreographyEngaged() && !portfolioMarquee.classList.contains('is-scrolling')) {
+              portfolioMarquee.classList.add('is-visible', 'is-scrolling');
+            }
             marqueeFallbackObserver.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.1 }
+      { threshold: 0 }
     );
     marqueeFallbackObserver.observe(portfolioMarquee);
   }
