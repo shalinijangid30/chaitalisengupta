@@ -38,15 +38,16 @@
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
   // About + Portfolio hand-off — the first About photo is glued to the
-  // right edge of the viewport and tracks the cursor vertically while the
-  // copy scrolls past. On reaching the trigger it keeps using that very
-  // same cursor-follow glide — just re-aimed at the marquee's baseline
-  // instead of the live cursor — so the descent never "drops" or changes
-  // pace. Once it settles on the baseline it shifts straight left onto
-  // the marquee's anchored slot, while the rest of the portfolio opens
-  // one card at a time behind it. Reversible: scrolling back up shifts it
-  // right, closes the marquee, then hands control back to live cursor
-  // tracking for the trip back up. Fine-pointer only.
+  // right edge of the viewport and holds its initial aligned offset below
+  // the About heading as the copy scrolls past (clamped so it never rises
+  // above the heading or drops below the consult button). On reaching the
+  // trigger it keeps using that very same glide — just re-aimed at the
+  // marquee's baseline instead of the scroll offset — so the descent never
+  // "drops" or changes pace. Once it settles on the baseline it shifts
+  // straight left onto the marquee's anchored slot, while the rest of the
+  // portfolio opens one card at a time behind it. Reversible: scrolling
+  // back up shifts it right, closes the marquee, then hands control back
+  // to scroll tracking for the trip back up. Fine-pointer only.
   const followPhoto = document.getElementById('follow-photo');
   const portfolioEntryTrigger = document.getElementById('portfolio-entry-trigger');
   const portfolioMarquee = document.getElementById('portfolio-marquee');
@@ -123,15 +124,17 @@
       let currentX = col.x;
       let currentY = parseFloat(followPhoto.style.top) || window.innerHeight / 3;
       let currentW = col.w;
-      let cursorY = currentY;
+
+      // The photo's initial aligned Y, held fixed from here on — it no
+      // longer tracks any live input. clampFollowY's live heading/button
+      // rects are what let it respond to scroll: as the page moves, those
+      // bounds slide past this fixed value and pin the photo to whichever
+      // one it has reached, instead of it drifting indefinitely.
+      const initialY = currentY;
 
       // Modes: follow → dockingY → dockingX → anchored → returningX → follow
       let mode = 'follow';
       choreographyEngaged = () => mode !== 'follow';
-
-      window.addEventListener('mousemove', (e) => {
-        cursorY = e.clientY;
-      });
 
       const settleInAnchor = () => {
         mode = 'anchored';
@@ -155,7 +158,7 @@
             const c = glueColumn();
             targetX = c.x;
             targetW = c.w;
-            targetY = clampFollowY(cursorY);
+            targetY = clampFollowY(initialY);
           } else if (mode === 'dockingY') {
             // Straight down the glued column to the marquee's baseline.
             const c = glueColumn();
