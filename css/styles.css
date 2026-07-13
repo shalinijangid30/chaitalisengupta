@@ -437,6 +437,23 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
   transform: translate3d(-50%, -50%, 0);
 }
 .follow-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.follow-photo-label {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(to top, oklch(0.12 0.06 20 / 0.75), transparent);
+  color: var(--ink);
+  font-size: 0.8rem;
+}
+.follow-photo-status { display: inline-flex; align-items: center; gap: 0.4em; color: var(--accent); }
+.follow-photo-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px oklch(0.74 0.11 78 / 0.25);
+}
 .follow-photo.is-following { opacity: 1; }
 /* The straight-down phase is driven frame-by-frame in JS (the same
    cursor-follow lerp, just re-aimed at the marquee baseline), not a CSS
