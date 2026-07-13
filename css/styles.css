@@ -455,13 +455,9 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
   box-shadow: 0 0 0 3px oklch(0.74 0.11 78 / 0.25);
 }
 .follow-photo.is-following { opacity: 1; }
-/* The straight-down phase is driven frame-by-frame in JS (the same
-   cursor-follow lerp, just re-aimed at the marquee baseline), not a CSS
-   transition — so it never changes pace or visibly "hands off". */
-.follow-photo.is-shifting-horizontal {
-  opacity: 1;
-  transition: left 1.1s var(--ease-out-expo), width 1.1s var(--ease-out-expo);
-}
+/* Every phase — cursor-follow, straight down, straight left, and the
+   reverse — is driven frame-by-frame by the same JS lerp, never a CSS
+   transition, so the photo keeps one constant pace across all sections. */
 /* Once anchored, the photo is reparented into the marquee's anchor slot
    and scrolls with the page instead of staying glued to the viewport. */
 .follow-photo.is-anchored {
