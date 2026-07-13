@@ -144,6 +144,7 @@
         followPhoto.style.top = '';
         followPhoto.style.width = '';
         portfolioMarqueeAnchor.appendChild(followPhoto);
+        portfolioMarquee.classList.remove('is-trailing');
         portfolioMarquee.classList.add('is-scrolling');
       };
 
@@ -181,17 +182,19 @@
             targetY = anchorRect.bottom - half;
             if (Math.abs(targetY - currentY) < SETTLE_EPSILON) {
               mode = 'dockingX';
-              portfolioMarquee.classList.add('is-visible');
+              // is-trailing starts the track's own sliding motion right
+              // as the leftward glide begins — kept separate from
+              // is-scrolling, which also forces every card to full
+              // opacity and would otherwise short-circuit the one-by-one
+              // reveal below and pop the whole carousel in at once.
+              portfolioMarquee.classList.add('is-visible', 'is-trailing');
             }
           } else if (mode === 'dockingX') {
             // Straight left onto the anchor slot, easing in at a slower,
             // gentler pace than the drop above; every stretch of leftward
             // travel opens another card of space behind it — the reveal
-            // stays exactly in sync with this movement, frame by frame.
-            // is-scrolling isn't added until settleInAnchor() — it forces
-            // every card to full opacity, which would otherwise short-
-            // circuit this one-by-one reveal and make the whole carousel
-            // pop in at once instead of easing in behind the photo.
+            // stays exactly in sync with this movement, frame by frame,
+            // while the track itself is already sliding via is-trailing.
             targetX = anchorRect.left + anchorRect.width / 2;
             targetW = anchorRect.width;
             targetY = anchorRect.top + anchorRect.height / 2;
@@ -244,7 +247,7 @@
           followPhoto.style.top = currentY + 'px';
           followPhoto.style.width = currentW + 'px';
         }
-        portfolioMarquee.classList.remove('is-visible', 'is-scrolling');
+        portfolioMarquee.classList.remove('is-visible', 'is-scrolling', 'is-trailing');
         mode = 'returningX';
       };
 

@@ -502,7 +502,12 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
   gap: 14px;
   width: max-content;
 }
-.portfolio-marquee.is-scrolling .portfolio-marquee-track {
+/* is-trailing starts the track sliding while the photo is still docking —
+   kept separate from is-scrolling so it doesn't also force every card
+   to full opacity below; cards keep opening one by one underneath the
+   motion. is-scrolling takes over once the photo has settled. */
+.portfolio-marquee.is-scrolling .portfolio-marquee-track,
+.portfolio-marquee.is-trailing .portfolio-marquee-track {
   animation: portfolio-marquee-scroll 36s linear infinite;
 }
 @keyframes portfolio-marquee-scroll {
@@ -540,7 +545,8 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
 .portfolio-marquee-card:hover img { transform: scale(1.05); }
 @media (prefers-reduced-motion: reduce) {
   .portfolio-marquee-card { opacity: 1; transform: none; transition: none; }
-  .portfolio-marquee.is-scrolling .portfolio-marquee-track { animation: none; }
+  .portfolio-marquee.is-scrolling .portfolio-marquee-track,
+  .portfolio-marquee.is-trailing .portfolio-marquee-track { animation: none; }
 }
 @media (max-width: 900px) {
   .portfolio-marquee-anchor, .portfolio-marquee-card { width: 200px; }
