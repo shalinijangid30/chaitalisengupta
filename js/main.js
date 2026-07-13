@@ -71,7 +71,7 @@
     } else {
       const SETTLE_EPSILON = 0.5;
       const LERP = 0.14; // pace for the follow hold and the vertical drop
-      const DOCK_LERP = 0.035; // slower, gentler pace easing into the anchor slot
+      const DOCK_LERP = 0.0175; // slower, gentler pace easing into the anchor slot
       const REVEAL_COUNT = 9; // unique cards; loop duplicates follow via is-scrolling
 
       // The photo's glued column matches the 3rd marquee card exactly —
@@ -166,23 +166,28 @@
             // carousel that isn't even in the viewport yet.
             if (anchorRect.top <= currentY) {
               mode = 'dockingY';
-              portfolioMarquee.classList.add('is-visible');
             }
           } else if (mode === 'dockingY') {
             // Keep gliding straight down the glued column — past the
             // anchor's top edge — until the photo's own base reaches the
             // marquee's base line, like it's settling onto the shelf
-            // before it slides in.
+            // before it slides in. The carousel reveal itself doesn't
+            // start until this drop is done, so it stays in lockstep
+            // with the leftward slide rather than starting early.
             const c = glueColumn();
             targetX = c.x;
             targetW = c.w;
             const half = (currentW * 1.25) / 2; // aspect-ratio 4/5
             targetY = anchorRect.bottom - half;
-            if (Math.abs(targetY - currentY) < SETTLE_EPSILON) mode = 'dockingX';
+            if (Math.abs(targetY - currentY) < SETTLE_EPSILON) {
+              mode = 'dockingX';
+              portfolioMarquee.classList.add('is-visible');
+            }
           } else if (mode === 'dockingX') {
             // Straight left onto the anchor slot, easing in at a slower,
             // gentler pace than the drop above; every stretch of leftward
-            // travel opens another card of space behind it.
+            // travel opens another card of space behind it — the reveal
+            // stays exactly in sync with this movement, frame by frame.
             // is-scrolling isn't added until settleInAnchor() — it forces
             // every card to full opacity, which would otherwise short-
             // circuit this one-by-one reveal and make the whole carousel
