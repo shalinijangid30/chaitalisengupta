@@ -47,9 +47,10 @@
   // height does it shift left onto the anchored slot, while the rest of
   // the portfolio opens one card at a time and the marquee starts
   // scrolling behind it — the carousel reads as sliding in under the
-  // photo, never dropping down to meet it. Reversible: scrolling back up
-  // shifts it right, closes the marquee, then hands control back to
-  // scroll tracking for the trip back up. Fine-pointer only.
+  // photo, never dropping down to meet it. Reversible, physically, in
+  // both directions: scrolling back up eases the photo right first,
+  // closing the marquee in lockstep, and only once it's back on the glued
+  // column does it rise back up, mirroring the way down. Fine-pointer only.
   const followPhoto = document.getElementById('follow-photo');
   const portfolioEntryTrigger = document.getElementById('portfolio-entry-trigger');
   const portfolioMarquee = document.getElementById('portfolio-marquee');
@@ -158,7 +159,19 @@
       };
 
       const tick = () => {
-        if (mode !== 'anchored') {
+        if (mode === 'anchored') {
+          // Mirrors the forward dock's own physical, every-frame trigger
+          // (see the 'follow' branch below) instead of a one-shot observer
+          // callback, so the undock responds immediately and reliably no
+          // matter how fast the visitor scrolls back up. Fires at the same
+          // geometric moment the old IntersectionObserver used to: the
+          // entry trigger's top has scrolled back down past the
+          // 65%-viewport-height line.
+          const triggerRect = portfolioEntryTrigger.getBoundingClientRect();
+          if (triggerRect.top > 0 && triggerRect.top > window.innerHeight * 0.65) {
+            dockBack();
+          }
+        } else {
           let targetX = currentX;
           let targetY = currentY;
           let targetW = currentW;
@@ -265,29 +278,11 @@
         mode = 'returningX';
       };
 
-      // The forward dock is now triggered physically (see tick() above),
-      // not by scroll position of a trigger element. This observer only
-      // handles the reverse trip: undocking when the visitor scrolls
-      // back up past the dock zone.
-      const dockObserver = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (
-              !entry.isIntersecting &&
-              mode !== 'follow' &&
-              mode !== 'returningX' &&
-              entry.boundingClientRect.top > 0
-            ) {
-              // Undock only when the trigger drops below the dock zone —
-              // i.e. the visitor scrolled back up. Scrolling deeper down
-              // (trigger exiting past the top) keeps the photo anchored.
-              dockBack();
-            }
-          });
-        },
-        { threshold: 0, rootMargin: '0px 0px -35% 0px' }
-      );
-      dockObserver.observe(portfolioEntryTrigger);
+      // Both the forward dock and this reverse undock are now triggered
+      // physically, checked every frame inside tick() (see the 'follow'
+      // and 'anchored' branches above) rather than by a scroll-position
+      // observer — so the trip is symmetric in both directions and reacts
+      // immediately regardless of scroll speed.
     }
 
     // Safety net — guarantees the marquee reveals even if the cursor-
