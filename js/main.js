@@ -197,9 +197,14 @@
             // before it slides in. The carousel reveal itself doesn't
             // start until this drop is done, so it stays in lockstep
             // with the leftward slide rather than starting early.
+            // X and width are pinned to the live glued column every frame
+            // (not lerped) so a fast scroll can never let them lag behind
+            // and drift off the vertical track — only Y actually eases.
             const c = glueColumn();
             targetX = c.x;
             targetW = c.w;
+            currentX = targetX;
+            currentW = targetW;
             const half = (currentW * 1.25) / 2; // aspect-ratio 4/5
             targetY = anchorRect.bottom - half;
             if (Math.abs(targetY - currentY) < SETTLE_EPSILON) {
@@ -218,38 +223,52 @@
             // travel opens another card of space behind it — the reveal
             // stays exactly in sync with this movement, frame by frame,
             // while the track itself is already sliding via is-trailing.
+            // Y is pinned to the live anchor row every frame (not lerped)
+            // so the leftward glide can never bow off its horizontal line.
             targetX = anchorRect.left + anchorRect.width / 2;
             targetW = anchorRect.width;
             targetY = anchorRect.top + anchorRect.height / 2;
+            currentY = targetY;
             revealCarouselByProgress();
             if (
               Math.abs(targetX - currentX) < SETTLE_EPSILON &&
-              Math.abs(targetY - currentY) < SETTLE_EPSILON &&
               Math.abs(targetW - currentW) < SETTLE_EPSILON
             ) {
               settleInAnchor();
             }
           } else if (mode === 'returningX') {
-            // Straight right, back to the glued column — the carousel
-            // wipe closes back up as the space it had is taken back. Also
-            // tracks the glued column's own live Y, the same way dockingX
-            // above continuously tracks the anchor's live Y: once the
-            // photo leaves the anchor it's fixed-position, so without this
-            // its Y stays frozen at the moment it undocked while further
-            // scrolling carries the row away underneath it, and the photo
-            // visibly drifts off the row's track instead of riding along
-            // with it back to the glued column.
+            // Mirror of dockingX, run in reverse: straight right, back to
+            // the glued column, while Y stays pinned to the live anchor
+            // row (not lerped) — the carousel wipe closes in lockstep with
+            // this rightward glide, exactly the reverse of how it opened.
+            // Only once this leg fully settles does the photo start rising
+            // — it never travels diagonally back toward the follow spot.
             const c = glueColumn();
             const cardRect = thirdCard.getBoundingClientRect();
             targetX = c.x;
             targetW = c.w;
             targetY = cardRect.top + cardRect.height / 2;
+            currentY = targetY;
             revealCarouselByProgress();
             if (
               Math.abs(targetX - currentX) < SETTLE_EPSILON &&
-              Math.abs(targetY - currentY) < SETTLE_EPSILON &&
               Math.abs(targetW - currentW) < SETTLE_EPSILON
             ) {
+              mode = 'returningY';
+            }
+          } else if (mode === 'returningY') {
+            // Mirror of dockingY, run in reverse: straight back up the
+            // glued column to the held follow position. X and width are
+            // pinned to the live glued column every frame (not lerped) so
+            // this leg is purely vertical, retracing the same path the
+            // photo dropped down on.
+            const c = glueColumn();
+            targetX = c.x;
+            targetW = c.w;
+            currentX = targetX;
+            currentW = targetW;
+            targetY = clampFollowY(initialY);
+            if (Math.abs(targetY - currentY) < SETTLE_EPSILON) {
               mode = 'follow';
             }
           }
