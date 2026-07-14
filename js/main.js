@@ -72,23 +72,17 @@
       const SETTLE_EPSILON = 0.5;
       const LERP = 0.14; // pace for the follow hold and the vertical drop
       const DOCK_LERP = 0.010; // slower, gentler pace easing into the anchor slot
-      const REVEAL_COUNT = 9; // unique cards; loop duplicates follow via is-scrolling
 
       // The photo's glued column matches the 3rd marquee card exactly —
       // same X center, same width — so when it eventually docks, it's
       // already living on the marquee's own grid.
       const marqueeCards = Array.from(portfolioMarquee.querySelectorAll('.portfolio-marquee-card'));
       const thirdCard = marqueeCards[2];
+      const portfolioMarqueeViewport = portfolioMarquee.querySelector('.portfolio-marquee-viewport');
 
       const glueColumn = () => {
         const r = thirdCard.getBoundingClientRect();
-        // A card not yet opened sits 24px left of its resting spot.
-        const comp =
-          thirdCard.classList.contains('is-open') ||
-          portfolioMarquee.classList.contains('is-scrolling')
-            ? 0
-            : 24;
-        return { x: r.left + comp + r.width / 2, w: r.width };
+        return { x: r.left + r.width / 2, w: r.width };
       };
 
       // The photo holds its initial aligned Y for the entire wait phase —
@@ -104,16 +98,17 @@
         return y;
       };
 
-      // Opens one card of space for every stretch of leftward travel:
-      // the further the photo has moved along -x, the more slots open.
-      const openCardsByProgress = (anchorRect) => {
+      // Wipes the carousel viewport open from behind the photo — a
+      // single continuous clip tied to how far the photo has travelled
+      // left, rather than each card fading in on its own, so the
+      // carousel reads as being physically pulled into view by the
+      // photo's motion instead of popping in card by card.
+      const revealCarouselByProgress = (anchorRect) => {
         const rightEnd = glueColumn().x;
         const leftEnd = anchorRect.left + anchorRect.width / 2;
         const span = rightEnd - leftEnd;
         const p = span > 0 ? Math.min(Math.max((rightEnd - currentX) / span, 0), 1) : 1;
-        marqueeCards.forEach((card, i) => {
-          card.classList.toggle('is-open', i < p * REVEAL_COUNT);
-        });
+        portfolioMarqueeViewport.style.clipPath = `inset(0 ${(1 - p) * 100}% 0 0)`;
       };
 
       // Everything moves through one lerp loop — X, Y, and width all
@@ -146,6 +141,9 @@
         portfolioMarqueeAnchor.appendChild(followPhoto);
         portfolioMarquee.classList.remove('is-trailing');
         portfolioMarquee.classList.add('is-scrolling');
+        // The CSS .is-scrolling rule takes the viewport the rest of the
+        // way to fully revealed; drop the inline clip so it can.
+        portfolioMarqueeViewport.style.clipPath = '';
       };
 
       const tick = () => {
@@ -198,7 +196,7 @@
             targetX = anchorRect.left + anchorRect.width / 2;
             targetW = anchorRect.width;
             targetY = anchorRect.top + anchorRect.height / 2;
-            openCardsByProgress(anchorRect);
+            revealCarouselByProgress(anchorRect);
             if (
               Math.abs(targetX - currentX) < SETTLE_EPSILON &&
               Math.abs(targetY - currentY) < SETTLE_EPSILON &&
@@ -207,12 +205,12 @@
               settleInAnchor();
             }
           } else if (mode === 'returningX') {
-            // Straight right, back to the glued column — the cards
-            // close one by one as the space they had is taken back.
+            // Straight right, back to the glued column — the carousel
+            // wipe closes back up as the space it had is taken back.
             const c = glueColumn();
             targetX = c.x;
             targetW = c.w;
-            openCardsByProgress(anchorRect);
+            revealCarouselByProgress(anchorRect);
             if (Math.abs(targetX - currentX) < SETTLE_EPSILON) mode = 'follow';
           }
 
@@ -248,6 +246,10 @@
           followPhoto.style.width = currentW + 'px';
         }
         portfolioMarquee.classList.remove('is-visible', 'is-scrolling', 'is-trailing');
+        // Removing is-scrolling drops the CSS rule that held the viewport
+        // fully open; pin it open inline for this one frame so there's no
+        // flash shut before the next tick() recomputes the real progress.
+        portfolioMarqueeViewport.style.clipPath = 'inset(0 0 0 0)';
         mode = 'returningX';
       };
 
