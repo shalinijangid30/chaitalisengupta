@@ -47,9 +47,10 @@
   // height does it shift left onto the anchored slot, while the rest of
   // the portfolio opens one card at a time and the marquee starts
   // scrolling behind it — the carousel reads as sliding in under the
-  // photo, never dropping down to meet it. Reversible: scrolling back up
-  // shifts it right, closes the marquee, then hands control back to
-  // scroll tracking for the trip back up. Fine-pointer only.
+  // photo, never dropping down to meet it. Reversible, physically, in
+  // both directions: scrolling back up eases the photo right first,
+  // closing the marquee in lockstep, and only once it's back on the glued
+  // column does it rise back up, mirroring the way down. Fine-pointer only.
   const followPhoto = document.getElementById('follow-photo');
   const portfolioEntryTrigger = document.getElementById('portfolio-entry-trigger');
   const portfolioMarquee = document.getElementById('portfolio-marquee');
@@ -71,24 +72,18 @@
     } else {
       const SETTLE_EPSILON = 0.5;
       const LERP = 0.14; // pace for the follow hold and the vertical drop
-      const DOCK_LERP = 0.0175; // slower, gentler pace easing into the anchor slot
-      const REVEAL_COUNT = 9; // unique cards; loop duplicates follow via is-scrolling
+      const DOCK_LERP = 0.010; // slower, gentler pace for the leftward dock and its reverse, so ease-in and ease-out feel the same speed
 
       // The photo's glued column matches the 3rd marquee card exactly —
       // same X center, same width — so when it eventually docks, it's
       // already living on the marquee's own grid.
       const marqueeCards = Array.from(portfolioMarquee.querySelectorAll('.portfolio-marquee-card'));
       const thirdCard = marqueeCards[2];
+      const portfolioMarqueeViewport = portfolioMarquee.querySelector('.portfolio-marquee-viewport');
 
       const glueColumn = () => {
         const r = thirdCard.getBoundingClientRect();
-        // A card not yet opened sits 24px left of its resting spot.
-        const comp =
-          thirdCard.classList.contains('is-open') ||
-          portfolioMarquee.classList.contains('is-scrolling')
-            ? 0
-            : 24;
-        return { x: r.left + comp + r.width / 2, w: r.width };
+        return { x: r.left + r.width / 2, w: r.width };
       };
 
       // The photo holds its initial aligned Y for the entire wait phase —
@@ -104,23 +99,28 @@
         return y;
       };
 
-      // Opens one card of space for every stretch of leftward travel:
-      // the further the photo has moved along -x, the more slots open.
-      // Opens from the LAST card backward (i.e. the card furthest from
-      // the anchor opens first) — like film unspooling off a reel in one
-      // direction — matching the same right-to-left direction the photo
-      // itself is travelling in, so newly revealed cards always surface
-      // on the side the photo is sliding away from, trailing its motion,
-      // instead of popping in near the anchor slot ahead of where the
-      // photo actually is.
-      const openCardsByProgress = (anchorRect) => {
-        const rightEnd = glueColumn().x;
-        const leftEnd = anchorRect.left + anchorRect.width / 2;
-        const span = rightEnd - leftEnd;
-        const p = span > 0 ? Math.min(Math.max((rightEnd - currentX) / span, 0), 1) : 1;
-        marqueeCards.forEach((card, i) => {
-          card.classList.toggle('is-open', i >= (1 - p) * REVEAL_COUNT);
-        });
+      // Wipes the carousel viewport open from behind the photo — tied to
+      // real pixels moved since the leftward glide began (dockingXStartX),
+      // matched 1:1 against the viewport's own width, so the revealed
+      // edge always sits exactly where the photo currently is on screen.
+      // (An earlier version scaled the photo's overall dock progress —
+      // measured over its full travel to the anchor — onto the
+      // viewport's width directly; since that full travel distance is
+      // longer than the viewport itself, the reveal ran ahead of the
+      // photo's real position instead of tracking it.)
+      // The wipe opens from the viewport's right edge toward its left —
+      // like film unspooling off a reel in one direction — matching the
+      // same right-to-left direction the photo itself is travelling in,
+      // so newly revealed cards always surface on the side the photo is
+      // sliding away from, trailing its motion instead of popping in near
+      // the anchor slot ahead of where the photo actually is.
+      let dockingXStartX = null;
+      const revealCarouselByProgress = () => {
+        const viewportRect = portfolioMarqueeViewport.getBoundingClientRect();
+        if (viewportRect.width <= 0 || dockingXStartX === null) return;
+        const revealedPx = Math.min(Math.max(dockingXStartX - currentX, 0), viewportRect.width);
+        const revealedPercent = (revealedPx / viewportRect.width) * 100;
+        portfolioMarqueeViewport.style.clipPath = `inset(0 0 0 ${100 - revealedPercent}%)`;
       };
 
       // Everything moves through one lerp loop — X, Y, and width all
@@ -153,10 +153,25 @@
         portfolioMarqueeAnchor.appendChild(followPhoto);
         portfolioMarquee.classList.remove('is-trailing');
         portfolioMarquee.classList.add('is-scrolling');
+        // The CSS .is-scrolling rule takes the viewport the rest of the
+        // way to fully revealed; drop the inline clip so it can.
+        portfolioMarqueeViewport.style.clipPath = '';
       };
 
       const tick = () => {
-        if (mode !== 'anchored') {
+        if (mode === 'anchored') {
+          // Mirrors the forward dock's own physical, every-frame trigger
+          // (see the 'follow' branch below) instead of a one-shot observer
+          // callback, so the undock responds immediately and reliably no
+          // matter how fast the visitor scrolls back up. Fires at the same
+          // geometric moment the old IntersectionObserver used to: the
+          // entry trigger's top has scrolled back down past the
+          // 65%-viewport-height line.
+          const triggerRect = portfolioEntryTrigger.getBoundingClientRect();
+          if (triggerRect.top > 0 && triggerRect.top > window.innerHeight * 0.65) {
+            dockBack();
+          }
+        } else {
           let targetX = currentX;
           let targetY = currentY;
           let targetW = currentW;
@@ -189,6 +204,7 @@
             targetY = anchorRect.bottom - half;
             if (Math.abs(targetY - currentY) < SETTLE_EPSILON) {
               mode = 'dockingX';
+              dockingXStartX = currentX; // reveal tracks pixels moved from here
               // is-trailing starts the track's own sliding motion right
               // as the leftward glide begins — kept separate from
               // is-scrolling, which also forces every card to full
@@ -205,7 +221,7 @@
             targetX = anchorRect.left + anchorRect.width / 2;
             targetW = anchorRect.width;
             targetY = anchorRect.top + anchorRect.height / 2;
-            openCardsByProgress(anchorRect);
+            revealCarouselByProgress();
             if (
               Math.abs(targetX - currentX) < SETTLE_EPSILON &&
               Math.abs(targetY - currentY) < SETTLE_EPSILON &&
@@ -214,8 +230,8 @@
               settleInAnchor();
             }
           } else if (mode === 'returningX') {
-            // Straight right, back to the glued column — the cards
-            // close one by one as the space they had is taken back. Also
+            // Straight right, back to the glued column — the carousel
+            // wipe closes back up as the space it had is taken back. Also
             // tracks the glued column's own live Y, the same way dockingX
             // above continuously tracks the anchor's live Y: once the
             // photo leaves the anchor it's fixed-position, so without this
@@ -228,7 +244,7 @@
             targetX = c.x;
             targetW = c.w;
             targetY = cardRect.top + cardRect.height / 2;
-            openCardsByProgress(anchorRect);
+            revealCarouselByProgress();
             if (
               Math.abs(targetX - currentX) < SETTLE_EPSILON &&
               Math.abs(targetY - currentY) < SETTLE_EPSILON &&
@@ -238,7 +254,7 @@
             }
           }
 
-          const rate = mode === 'dockingX' ? DOCK_LERP : LERP;
+          const rate = (mode === 'dockingX' || mode === 'returningX') ? DOCK_LERP : LERP;
           currentX += (targetX - currentX) * rate;
           currentY += (targetY - currentY) * rate;
           currentW += (targetW - currentW) * rate;
@@ -270,52 +286,41 @@
           followPhoto.style.width = currentW + 'px';
         }
         portfolioMarquee.classList.remove('is-visible', 'is-scrolling', 'is-trailing');
+        // Removing is-scrolling drops the CSS rule that held the viewport
+        // fully open; pin it open inline for this one frame so there's no
+        // flash shut before the next tick() recomputes the real progress.
+        portfolioMarqueeViewport.style.clipPath = 'inset(0 0 0 0)';
         mode = 'returningX';
       };
 
-      // The forward dock is now triggered physically (see tick() above),
-      // not by scroll position of a trigger element. This observer only
-      // handles the reverse trip: undocking when the visitor scrolls
-      // back up past the dock zone.
-      const dockObserver = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (
-              !entry.isIntersecting &&
-              mode !== 'follow' &&
-              mode !== 'returningX' &&
-              entry.boundingClientRect.top > 0
-            ) {
-              // Undock only when the trigger drops below the dock zone —
-              // i.e. the visitor scrolled back up. Scrolling deeper down
-              // (trigger exiting past the top) keeps the photo anchored.
-              dockBack();
-            }
-          });
-        },
-        { threshold: 0, rootMargin: '0px 0px -35% 0px' }
-      );
-      dockObserver.observe(portfolioEntryTrigger);
+      // Both the forward dock and this reverse undock are now triggered
+      // physically, checked every frame inside tick() (see the 'follow'
+      // and 'anchored' branches above) rather than by a scroll-position
+      // observer — so the trip is symmetric in both directions and reacts
+      // immediately regardless of scroll speed.
     }
 
-    // Safety net — guarantees the marquee reveals once it scrolls into
-    // view even if the cursor-follow/dock sequence above never fires.
-    // It stands down whenever the choreography has taken charge, so it
-    // can never force the cards open mid-glide.
+    // Safety net — guarantees the marquee reveals even if the cursor-
+    // follow/dock sequence above never fires (e.g. a JS error). Tied to
+    // an actual failure state rather than a fixed timer: it only fires
+    // once the marquee has scrolled entirely past the top of the
+    // viewport while still stuck in 'follow' — by that point the
+    // physical dock trigger should already have engaged, so if it
+    // hasn't, something upstream genuinely broke. A timer here would
+    // otherwise race normal scroll pacing and could slam every card
+    // open early if the visitor simply pauses or scrolls slowly.
     const marqueeFallbackObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setTimeout(() => {
-              if (!choreographyEngaged() && !portfolioMarquee.classList.contains('is-scrolling')) {
-                portfolioMarquee.classList.add('is-visible', 'is-scrolling');
-              }
-            }, 2200);
+          if (!entry.isIntersecting && entry.boundingClientRect.bottom < 0) {
+            if (!choreographyEngaged() && !portfolioMarquee.classList.contains('is-scrolling')) {
+              portfolioMarquee.classList.add('is-visible', 'is-scrolling');
+            }
             marqueeFallbackObserver.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.1 }
+      { threshold: 0 }
     );
     marqueeFallbackObserver.observe(portfolioMarquee);
   }

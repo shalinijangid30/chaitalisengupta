@@ -428,12 +428,11 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
   left: 0;
   width: 240px;
   aspect-ratio: 4/5;
-  border-radius: 14px;
+  border-radius: 8px;
   overflow: hidden;
   z-index: 30;
   pointer-events: none;
   opacity: 0;
-  box-shadow: 0 30px 60px -20px oklch(0.10 0.08 22 / 0.55);
   transform: translate3d(-50%, -50%, 0);
 }
 .follow-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
@@ -463,7 +462,7 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
    past it endlessly. */
 .portfolio-marquee {
   display: flex;
-  gap: 14px;
+  gap: 8px;
   margin-top: 2.5rem;
 }
 .portfolio-marquee-anchor {
@@ -471,7 +470,7 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
   flex: 0 0 auto;
   width: 260px;
   aspect-ratio: 4/5;
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
   /* Transparent, not var(--surface) — this slot sits empty until the
      follow-photo docks into it, and a surface-tinted box would show as
@@ -483,16 +482,25 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
+  /* Closed by default — a single continuous mask over the whole row,
+     driven every frame from JS (revealCarouselByProgress) in lockstep
+     with the photo's leftward travel, so the carousel reads as being
+     physically pulled into view by the photo's motion rather than
+     each card fading in on its own timer. is-scrolling (added once the
+     photo has settled) takes it fully open and keeps it there. */
+  clip-path: inset(0 0 0 100%);
+}
+.portfolio-marquee.is-scrolling .portfolio-marquee-viewport {
+  clip-path: inset(0 0 0 0);
 }
 .portfolio-marquee-track {
   display: flex;
-  gap: 14px;
+  gap: 8px;
   width: max-content;
 }
 /* is-trailing starts the track sliding while the photo is still docking —
-   kept separate from is-scrolling so it doesn't also force every card
-   to full opacity below; cards keep opening one by one underneath the
-   motion. is-scrolling takes over once the photo has settled. */
+   kept separate from is-scrolling so the reveal above still plays out;
+   is-scrolling takes over once the photo has settled. */
 .portfolio-marquee.is-scrolling .portfolio-marquee-track,
 .portfolio-marquee.is-trailing .portfolio-marquee-track {
   animation: portfolio-marquee-scroll 36s linear infinite;
@@ -506,25 +514,10 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
   flex: 0 0 auto;
   width: 260px;
   aspect-ratio: 4/5;
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
   margin: 0;
   background: var(--surface);
-  opacity: 0;
-  transform: translateX(-24px);
-  /* No transition here on purpose — is-open is toggled every frame in
-     lockstep with the photo's leftward progress (openCardsByProgress),
-     so each card should snap to full opacity the instant its space
-     opens rather than lag behind on its own separate ease. */
-}
-/* Cards are opened one by one from JS, keyed to how far the hero photo
-   has travelled left — each .is-open marks another slot of space made.
-   Once the marquee is scrolling, every card (loop duplicates included)
-   stays open. */
-.portfolio-marquee-card.is-open,
-.portfolio-marquee.is-scrolling .portfolio-marquee-card {
-  opacity: 1;
-  transform: translateX(0);
 }
 .portfolio-marquee-card img {
   width: 100%;
@@ -534,7 +527,7 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
 }
 .portfolio-marquee-card:hover img { transform: scale(1.05); }
 @media (prefers-reduced-motion: reduce) {
-  .portfolio-marquee-card { opacity: 1; transform: none; transition: none; }
+  .portfolio-marquee-viewport { clip-path: none; }
   .portfolio-marquee.is-scrolling .portfolio-marquee-track,
   .portfolio-marquee.is-trailing .portfolio-marquee-track { animation: none; }
 }
