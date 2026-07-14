@@ -72,7 +72,15 @@
     } else {
       const SETTLE_EPSILON = 0.5;
       const LERP = 0.14; // pace for the follow hold and the vertical drop
-      const DOCK_LERP = 0.010; // slower, gentler pace for the leftward dock and its reverse, so ease-in and ease-out feel the same speed
+      const DOCK_LERP = 0.010; // slower, gentler pace for the leftward dock
+      // The undock is deliberately slower than the dock in both legs — the
+      // visitor has already seen the reveal, so the return reads as an
+      // unhurried settle back rather than the dock mirrored at the same
+      // speed. revealCarouselByProgress() is keyed off currentX every
+      // frame, so slowing returningX's lerp re-times the carousel's wipe
+      // close to match automatically, with no separate change needed there.
+      const RETURN_DOCK_LERP = 0.007; // slower than DOCK_LERP
+      const RETURN_LERP = 0.09; // slower than LERP
 
       // The photo's glued column matches the 3rd marquee card exactly —
       // same X center, same width — so when it eventually docks, it's
@@ -237,10 +245,14 @@
               settleInAnchor();
             }
           } else if (mode === 'returningX') {
-            // Mirror of dockingX, run in reverse: straight right, back to
-            // the glued column, while Y stays pinned to the live anchor
-            // row (not lerped) — the carousel wipe closes in lockstep with
-            // this rightward glide, exactly the reverse of how it opened.
+            // Same path as dockingX, run in reverse — straight right, back
+            // to the glued column, while Y stays pinned to the live anchor
+            // row (not lerped) — but at RETURN_DOCK_LERP, slower than the
+            // dock's own DOCK_LERP, so the undock reads as an unhurried
+            // settle back rather than the dock mirrored at the same speed.
+            // The carousel wipe closes in lockstep with this rightward
+            // glide (revealCarouselByProgress is keyed to currentX every
+            // frame), so slowing this leg re-times the wipe automatically.
             // Only once this leg fully settles does the photo start rising
             // — it never travels diagonally back toward the follow spot.
             const c = glueColumn();
@@ -257,11 +269,12 @@
               mode = 'returningY';
             }
           } else if (mode === 'returningY') {
-            // Mirror of dockingY, run in reverse: straight back up the
+            // Same path as dockingY, run in reverse — straight back up the
             // glued column to the held follow position. X and width are
             // pinned to the live glued column every frame (not lerped) so
             // this leg is purely vertical, retracing the same path the
-            // photo dropped down on.
+            // photo dropped down on — but at RETURN_LERP, slower than the
+            // drop's own LERP, keeping the whole undock quieter than the dock.
             const c = glueColumn();
             targetX = c.x;
             targetW = c.w;
@@ -273,7 +286,11 @@
             }
           }
 
-          const rate = (mode === 'dockingX' || mode === 'returningX') ? DOCK_LERP : LERP;
+          const rate =
+            mode === 'dockingX' ? DOCK_LERP :
+            mode === 'returningX' ? RETURN_DOCK_LERP :
+            mode === 'returningY' ? RETURN_LERP :
+            LERP;
           currentX += (targetX - currentX) * rate;
           currentY += (targetY - currentY) * rate;
           currentW += (targetW - currentW) * rate;
