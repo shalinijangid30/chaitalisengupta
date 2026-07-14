@@ -472,7 +472,11 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
   aspect-ratio: 4/5;
   border-radius: 8px;
   overflow: hidden;
-  background: var(--surface);
+  /* Transparent, not var(--surface) — this slot sits empty until the
+     follow-photo docks into it, and a surface-tinted box would show as
+     a mismatched red rectangle next to the still-floating photo for the
+     entire follow/docking phase. */
+  background: transparent;
 }
 .portfolio-marquee-viewport {
   flex: 1 1 auto;
@@ -484,7 +488,7 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
      physically pulled into view by the photo's motion rather than
      each card fading in on its own timer. is-scrolling (added once the
      photo has settled) takes it fully open and keeps it there. */
-  clip-path: inset(0 100% 0 0);
+  clip-path: inset(0 0 0 100%);
 }
 .portfolio-marquee.is-scrolling .portfolio-marquee-viewport {
   clip-path: inset(0 0 0 0);

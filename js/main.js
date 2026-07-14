@@ -71,7 +71,7 @@
     } else {
       const SETTLE_EPSILON = 0.5;
       const LERP = 0.14; // pace for the follow hold and the vertical drop
-      const DOCK_LERP = 0.010; // slower, gentler pace easing into the anchor slot
+      const DOCK_LERP = 0.010; // slower, gentler pace for the leftward dock and its reverse, so ease-in and ease-out feel the same speed
 
       // The photo's glued column matches the 3rd marquee card exactly —
       // same X center, same width — so when it eventually docks, it's
@@ -107,13 +107,19 @@
       // viewport's width directly; since that full travel distance is
       // longer than the viewport itself, the reveal ran ahead of the
       // photo's real position instead of tracking it.)
+      // The wipe opens from the viewport's right edge toward its left —
+      // like film unspooling off a reel in one direction — matching the
+      // same right-to-left direction the photo itself is travelling in,
+      // so newly revealed cards always surface on the side the photo is
+      // sliding away from, trailing its motion instead of popping in near
+      // the anchor slot ahead of where the photo actually is.
       let dockingXStartX = null;
       const revealCarouselByProgress = () => {
         const viewportRect = portfolioMarqueeViewport.getBoundingClientRect();
         if (viewportRect.width <= 0 || dockingXStartX === null) return;
         const revealedPx = Math.min(Math.max(dockingXStartX - currentX, 0), viewportRect.width);
         const revealedPercent = (revealedPx / viewportRect.width) * 100;
-        portfolioMarqueeViewport.style.clipPath = `inset(0 ${100 - revealedPercent}% 0 0)`;
+        portfolioMarqueeViewport.style.clipPath = `inset(0 0 0 ${100 - revealedPercent}%)`;
       };
 
       // Everything moves through one lerp loop — X, Y, and width all
@@ -220,7 +226,7 @@
             if (Math.abs(targetX - currentX) < SETTLE_EPSILON) mode = 'follow';
           }
 
-          const rate = mode === 'dockingX' ? DOCK_LERP : LERP;
+          const rate = (mode === 'dockingX' || mode === 'returningX') ? DOCK_LERP : LERP;
           currentX += (targetX - currentX) * rate;
           currentY += (targetY - currentY) * rate;
           currentW += (targetW - currentW) * rate;
