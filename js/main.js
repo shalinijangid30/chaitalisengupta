@@ -106,13 +106,20 @@
 
       // Opens one card of space for every stretch of leftward travel:
       // the further the photo has moved along -x, the more slots open.
+      // Opens from the LAST card backward (i.e. the card furthest from
+      // the anchor opens first) — like film unspooling off a reel in one
+      // direction — matching the same right-to-left direction the photo
+      // itself is travelling in, so newly revealed cards always surface
+      // on the side the photo is sliding away from, trailing its motion,
+      // instead of popping in near the anchor slot ahead of where the
+      // photo actually is.
       const openCardsByProgress = (anchorRect) => {
         const rightEnd = glueColumn().x;
         const leftEnd = anchorRect.left + anchorRect.width / 2;
         const span = rightEnd - leftEnd;
         const p = span > 0 ? Math.min(Math.max((rightEnd - currentX) / span, 0), 1) : 1;
         marqueeCards.forEach((card, i) => {
-          card.classList.toggle('is-open', i < p * REVEAL_COUNT);
+          card.classList.toggle('is-open', i >= (1 - p) * REVEAL_COUNT);
         });
       };
 
@@ -208,12 +215,27 @@
             }
           } else if (mode === 'returningX') {
             // Straight right, back to the glued column — the cards
-            // close one by one as the space they had is taken back.
+            // close one by one as the space they had is taken back. Also
+            // tracks the glued column's own live Y, the same way dockingX
+            // above continuously tracks the anchor's live Y: once the
+            // photo leaves the anchor it's fixed-position, so without this
+            // its Y stays frozen at the moment it undocked while further
+            // scrolling carries the row away underneath it, and the photo
+            // visibly drifts off the row's track instead of riding along
+            // with it back to the glued column.
             const c = glueColumn();
+            const cardRect = thirdCard.getBoundingClientRect();
             targetX = c.x;
             targetW = c.w;
+            targetY = cardRect.top + cardRect.height / 2;
             openCardsByProgress(anchorRect);
-            if (Math.abs(targetX - currentX) < SETTLE_EPSILON) mode = 'follow';
+            if (
+              Math.abs(targetX - currentX) < SETTLE_EPSILON &&
+              Math.abs(targetY - currentY) < SETTLE_EPSILON &&
+              Math.abs(targetW - currentW) < SETTLE_EPSILON
+            ) {
+              mode = 'follow';
+            }
           }
 
           const rate = mode === 'dockingX' ? DOCK_LERP : LERP;
