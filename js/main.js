@@ -98,17 +98,22 @@
         return y;
       };
 
-      // Wipes the carousel viewport open from behind the photo — a
-      // single continuous clip tied to how far the photo has travelled
-      // left, rather than each card fading in on its own, so the
-      // carousel reads as being physically pulled into view by the
-      // photo's motion instead of popping in card by card.
-      const revealCarouselByProgress = (anchorRect) => {
-        const rightEnd = glueColumn().x;
-        const leftEnd = anchorRect.left + anchorRect.width / 2;
-        const span = rightEnd - leftEnd;
-        const p = span > 0 ? Math.min(Math.max((rightEnd - currentX) / span, 0), 1) : 1;
-        portfolioMarqueeViewport.style.clipPath = `inset(0 ${(1 - p) * 100}% 0 0)`;
+      // Wipes the carousel viewport open from behind the photo — tied to
+      // real pixels moved since the leftward glide began (dockingXStartX),
+      // matched 1:1 against the viewport's own width, so the revealed
+      // edge always sits exactly where the photo currently is on screen.
+      // (An earlier version scaled the photo's overall dock progress —
+      // measured over its full travel to the anchor — onto the
+      // viewport's width directly; since that full travel distance is
+      // longer than the viewport itself, the reveal ran ahead of the
+      // photo's real position instead of tracking it.)
+      let dockingXStartX = null;
+      const revealCarouselByProgress = () => {
+        const viewportRect = portfolioMarqueeViewport.getBoundingClientRect();
+        if (viewportRect.width <= 0 || dockingXStartX === null) return;
+        const revealedPx = Math.min(Math.max(dockingXStartX - currentX, 0), viewportRect.width);
+        const revealedPercent = (revealedPx / viewportRect.width) * 100;
+        portfolioMarqueeViewport.style.clipPath = `inset(0 ${100 - revealedPercent}% 0 0)`;
       };
 
       // Everything moves through one lerp loop — X, Y, and width all
@@ -180,6 +185,7 @@
             targetY = anchorRect.bottom - half;
             if (Math.abs(targetY - currentY) < SETTLE_EPSILON) {
               mode = 'dockingX';
+              dockingXStartX = currentX; // reveal tracks pixels moved from here
               // is-trailing starts the track's own sliding motion right
               // as the leftward glide begins — kept separate from
               // is-scrolling, which also forces every card to full
@@ -196,7 +202,7 @@
             targetX = anchorRect.left + anchorRect.width / 2;
             targetW = anchorRect.width;
             targetY = anchorRect.top + anchorRect.height / 2;
-            revealCarouselByProgress(anchorRect);
+            revealCarouselByProgress();
             if (
               Math.abs(targetX - currentX) < SETTLE_EPSILON &&
               Math.abs(targetY - currentY) < SETTLE_EPSILON &&
@@ -210,7 +216,7 @@
             const c = glueColumn();
             targetX = c.x;
             targetW = c.w;
-            revealCarouselByProgress(anchorRect);
+            revealCarouselByProgress();
             if (Math.abs(targetX - currentX) < SETTLE_EPSILON) mode = 'follow';
           }
 
