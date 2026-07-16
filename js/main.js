@@ -171,6 +171,10 @@
           followPhoto.style.left = glue.x + 'px';
           followPhoto.style.top = clampFollowY(y) + 'px';
           followPhoto.style.width = glue.w + 'px';
+          // Fully hidden — clears any reveal left over from a previous
+          // visit to the horizontal phase (e.g. scrolled down partway,
+          // then back up past the pin boundary into this phase again).
+          portfolioMarqueeViewport.style.clipPath = 'inset(0 0 0 100%)';
         } else if (pinProgress < 1) {
           // Horizontal phase: the stage is pinned; pinProgress is a
           // direct read of how far scrolled through the reserved
