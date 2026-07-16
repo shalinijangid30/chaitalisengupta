@@ -129,6 +129,13 @@
 
       let phase = 'vertical'; // 'vertical' | 'horizontal' | 'docked'
 
+      // The marquee autoplays once the photo is at least halfway through
+      // its horizontal journey — decoupled from "docked" (which is about
+      // reparenting the photo into the anchor slot at full completion),
+      // so play/stop is its own threshold, checked every tick regardless
+      // of phase, and reverses automatically when scrolling back up.
+      const MARQUEE_PLAY_THRESHOLD = 0.5;
+
       const undockToFixed = () => {
         const rect = followPhoto.getBoundingClientRect();
         document.body.appendChild(followPhoto);
@@ -137,7 +144,6 @@
         followPhoto.style.left = (rect.left + rect.width / 2) + 'px';
         followPhoto.style.top = (rect.top + rect.height / 2) + 'px';
         followPhoto.style.width = rect.width + 'px';
-        portfolioMarquee.classList.remove('is-playing');
       };
 
       const dockIntoAnchor = () => {
@@ -147,7 +153,6 @@
         followPhoto.style.top = '';
         followPhoto.style.width = '';
         portfolioMarqueeAnchor.appendChild(followPhoto);
-        portfolioMarquee.classList.add('is-playing');
         // The CSS .is-playing rule takes the viewport the rest of the
         // way to fully revealed; drop the inline clip so it can.
         portfolioMarqueeViewport.style.clipPath = '';
@@ -157,6 +162,7 @@
         const spacerRect = portfolioDockSpacer.getBoundingClientRect();
         const scrollableDistance = portfolioDockSpacer.offsetHeight - window.innerHeight;
         const pinProgress = scrollableDistance > 0 ? clamp(-spacerRect.top / scrollableDistance, 0, 1) : 0;
+        portfolioMarquee.classList.toggle('is-playing', spacerRect.top <= 0 && pinProgress >= MARQUEE_PLAY_THRESHOLD);
 
         if (spacerRect.top > 0) {
           // Vertical phase: page scrolls normally; Y is a direct (no
@@ -192,8 +198,9 @@
           // (scrolling back up) closes it the same way, left to right.
           portfolioMarqueeViewport.style.clipPath = `inset(0 0 0 ${100 - pinProgress * 100}%)`;
         } else {
-          // Docked: fully revealed, marquee autoplays until pinProgress
-          // drops back below 1 (the instant the user scrolls back up).
+          // Docked: fully revealed and the photo has settled into the
+          // anchor slot. Marquee autoplay is governed separately above
+          // by MARQUEE_PLAY_THRESHOLD, not by reaching this phase.
           if (phase !== 'docked') dockIntoAnchor();
           phase = 'docked';
         }
