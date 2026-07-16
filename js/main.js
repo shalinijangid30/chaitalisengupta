@@ -80,6 +80,12 @@
         return { x: r.left + r.width / 2, w: r.width, y: r.top + r.height / 2 };
       };
 
+      // Same gap as between any two marquee cards, so the reveal
+      // boundary trails the photo's own trailing edge by exactly that
+      // much — a constant, real on-screen distance — throughout the
+      // whole horizontal phase.
+      const marqueeGap = parseFloat(getComputedStyle(portfolioMarquee).columnGap) || 8;
+
       // The photo starts at its initial aligned Y and moves straight down
       // 1:1 with scroll distance, reaching dockedY (the row's vertical
       // center once the stage is pinned — window.innerHeight / 2, since
@@ -182,21 +188,30 @@
           // then back up past the pin boundary into this phase again).
           portfolioMarqueeViewport.style.clipPath = 'inset(0 0 0 100%)';
         } else if (pinProgress < 1) {
-          // Horizontal phase: the stage is pinned; pinProgress is a
-          // direct read of how far scrolled through the reserved
-          // distance, so X/width and the carousel reveal below are
-          // both driven by the same value — trivially in lockstep.
+          // Horizontal phase: the stage is pinned; pinProgress drives the
+          // photo's X/width directly. The carousel reveal is NOT derived
+          // from pinProgress directly against the viewport's own width —
+          // the travel distance and the viewport width are different
+          // measurements, so that would let the reveal boundary drift
+          // away from the photo's real edge over the course of the
+          // journey. Instead the boundary is pinned to the photo's own
+          // live trailing edge plus one card-gap, so the two are always
+          // exactly marqueeGap apart, in real pixels, at every point.
           if (phase === 'docked') undockToFixed();
           phase = 'horizontal';
           const glue = glueColumn();
           const anchor = anchorTarget();
-          followPhoto.style.left = (glue.x + (anchor.x - glue.x) * pinProgress) + 'px';
+          const photoWidth = glue.w + (anchor.w - glue.w) * pinProgress;
+          const photoCenterX = glue.x + (anchor.x - glue.x) * pinProgress;
+          followPhoto.style.left = photoCenterX + 'px';
           followPhoto.style.top = anchor.y + 'px';
-          followPhoto.style.width = (glue.w + (anchor.w - glue.w) * pinProgress) + 'px';
-          // Reveal grows from the right edge leftward (as if the card,
-          // moving left, is wiping it into view); reversing pinProgress
-          // (scrolling back up) closes it the same way, left to right.
-          portfolioMarqueeViewport.style.clipPath = `inset(0 0 0 ${100 - pinProgress * 100}%)`;
+          followPhoto.style.width = photoWidth + 'px';
+          const viewportRect = portfolioMarqueeViewport.getBoundingClientRect();
+          const boundaryX = photoCenterX + photoWidth / 2 + marqueeGap;
+          const leftInsetPct = viewportRect.width > 0
+            ? clamp(((boundaryX - viewportRect.left) / viewportRect.width) * 100, 0, 100)
+            : 100;
+          portfolioMarqueeViewport.style.clipPath = `inset(0 0 0 ${leftInsetPct}%)`;
         } else {
           // Docked: fully revealed and the photo has settled into the
           // anchor slot. Marquee autoplay is governed separately above
