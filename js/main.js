@@ -58,6 +58,11 @@
     if (prefersReducedMotion) {
       followPhoto.remove();
       portfolioMarquee.classList.add('is-playing');
+      // The spacer/stage exist only to reserve scroll distance for the
+      // scroll-jack, which never runs here — without this, the spacer
+      // (never sized by JS in this path) collapses to the stage's own
+      // 100dvh box, leaving a near-full-viewport gap around the marquee.
+      portfolioDockStage.classList.add('is-static');
     } else {
       const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
@@ -227,22 +232,36 @@
       // update() only reads already-committed layout (getBoundingClientRect)
       // and writes inline styles, so it's cheap enough per scroll event
       // not to need batching.
-      sizeMarqueeDuration();
-      sizeDockSpacer();
-      measureVerticalTravel();
-      update();
-      window.addEventListener('scroll', update, { passive: true });
-      window.addEventListener('resize', () => {
+      const refreshGeometry = () => {
         sizeMarqueeDuration();
         sizeDockSpacer();
         measureVerticalTravel();
         update();
-      });
-      window.addEventListener('load', () => {
-        sizeDockSpacer();
-        measureVerticalTravel();
-        update();
-      });
+      };
+
+      // Coalesces bursts of resize events (e.g. iOS Safari firing several
+      // as the address bar collapses/expands mid-scroll) into one recompute
+      // per frame, instead of doing full layout reads/writes on every event.
+      let refreshQueued = false;
+      const queueRefresh = () => {
+        if (refreshQueued) return;
+        refreshQueued = true;
+        requestAnimationFrame(() => {
+          refreshQueued = false;
+          refreshGeometry();
+        });
+      };
+
+      refreshGeometry();
+      window.addEventListener('scroll', update, { passive: true });
+      window.addEventListener('resize', queueRefresh);
+      window.addEventListener('load', refreshGeometry);
+      // window.innerHeight can lag the CSS 100dvh value used for the dock
+      // stage while mobile browser chrome animates in/out; re-measuring on
+      // visualViewport changes keeps the pinned-scroll math in sync with it.
+      if (window.visualViewport) {
+        window.visualViewport.addEventListener('resize', queueRefresh);
+      }
     }
   }
 

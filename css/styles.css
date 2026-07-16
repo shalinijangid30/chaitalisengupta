@@ -468,6 +468,15 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
   display: flex;
   align-items: center;
 }
+/* Reduced motion skips the scroll-jack entirely, so the spacer/stage
+   have nothing to reserve height for — without this, the spacer (which
+   JS never sizes in that path) collapses to the stage's own 100dvh box,
+   leaving a near-full-viewport gap of empty space around the marquee. */
+.portfolio-dock-stage.is-static {
+  position: static;
+  height: auto;
+  display: block;
+}
 
 /* Portfolio marquee — the anchored photo sits fixed at the left edge;
    the rest of the portfolio opens one card after another, then scrolls
@@ -507,16 +516,22 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
 .portfolio-marquee.is-playing .portfolio-marquee-viewport {
   clip-path: inset(0 0 0 0);
 }
+/* Autoplay only once fully docked — the shared DOCK_SPEED_PX_PER_MS
+   constant (js/main.js) sets --marquee-duration so this pace matches
+   the speed the photo was moving at while it finished its dock. The
+   animation itself is always attached and paused via play-state (not
+   added/removed with the animation shorthand) so that toggling
+   is-playing near the play threshold pauses/resumes in place instead
+   of restarting the loop from 0%. */
 .portfolio-marquee-track {
   display: flex;
   gap: 8px;
   width: max-content;
-}
-/* Autoplay only once fully docked — the shared DOCK_SPEED_PX_PER_MS
-   constant (js/main.js) sets --marquee-duration so this pace matches
-   the speed the photo was moving at while it finished its dock. */
-.portfolio-marquee.is-playing .portfolio-marquee-track {
   animation: portfolio-marquee-scroll var(--marquee-duration, 36s) linear infinite;
+  animation-play-state: paused;
+}
+.portfolio-marquee.is-playing .portfolio-marquee-track {
+  animation-play-state: running;
 }
 @keyframes portfolio-marquee-scroll {
   from { transform: translateX(0); }
