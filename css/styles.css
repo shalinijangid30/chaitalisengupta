@@ -497,12 +497,12 @@ input, textarea, select { font-family: inherit; font-size: 1rem; }
   /* Closed by default — a single continuous mask over the whole row,
      driven directly from scroll position (pinProgress, in js/main.js)
      in lockstep with the photo's leftward travel, so the carousel
-     reads as being physically pulled into view by the photo's motion.
-     Grows left-to-right (right-side inset) so the card nearest the
-     anchor is always the first one revealed. is-playing (added once
-     the photo has fully docked) takes it fully open and keeps it
-     there while the marquee autoplays. */
-  clip-path: inset(0 100% 0 0);
+     reads as being wiped into view by the photo's own motion. Grows
+     right-to-left (left-side inset) — the reveal edge trails the
+     moving photo, as if the photo itself is uncovering it. is-playing
+     (added once the photo has fully docked) takes it fully open and
+     keeps it there while the marquee autoplays. */
+  clip-path: inset(0 0 0 100%);
 }
 .portfolio-marquee.is-playing .portfolio-marquee-viewport {
   clip-path: inset(0 0 0 0);

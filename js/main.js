@@ -183,7 +183,10 @@
           followPhoto.style.left = (glue.x + (anchor.x - glue.x) * pinProgress) + 'px';
           followPhoto.style.top = anchor.y + 'px';
           followPhoto.style.width = (glue.w + (anchor.w - glue.w) * pinProgress) + 'px';
-          portfolioMarqueeViewport.style.clipPath = `inset(0 ${100 - pinProgress * 100}% 0 0)`;
+          // Reveal grows from the right edge leftward (as if the card,
+          // moving left, is wiping it into view); reversing pinProgress
+          // (scrolling back up) closes it the same way, left to right.
+          portfolioMarqueeViewport.style.clipPath = `inset(0 0 0 ${100 - pinProgress * 100}%)`;
         } else {
           // Docked: fully revealed, marquee autoplays until pinProgress
           // drops back below 1 (the instant the user scrolls back up).
