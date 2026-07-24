@@ -74,16 +74,14 @@
         <div class="hero-actions">
           <a href="contact.html" class="btn btn-primary">Book a Consultation</a>
         </div>
-
-        <!-- Marks the scroll point where the follow-photo docks and the portfolio trains in -->
-        <div id="portfolio-entry-trigger" class="portfolio-split-trigger" aria-hidden="true"></div>
       </div>
     </div>
   </section>
 
-  <!-- Cursor-following photo: glued to the right edge of the viewport,
-       tracking the cursor vertically while the About copy scrolls past,
-       then docks diagonally onto the marquee's anchored first slot. -->
+  <!-- Scroll-following photo: glued to the right edge of the viewport,
+       tracking scroll position vertically while the About copy scrolls
+       past, then docks horizontally onto the marquee's anchored first
+       slot once the pinned dock stage below engages. -->
   <div class="follow-photo is-following" id="follow-photo" aria-hidden="true" style="left: 1262px; top: 304px;">
     <img src="assets/images/photos/reception-ivory-02.jpg" alt="">
   </div>
@@ -96,6 +94,8 @@
         <p>Bridal, festive, editorial and reception work. Full portfolio on Instagram.</p>
       </div>
 
+      <div class="portfolio-dock-spacer" id="portfolio-dock-spacer">
+      <div class="portfolio-dock-stage" id="portfolio-dock-stage">
       <div class="portfolio-marquee" id="portfolio-marquee">
         <div class="portfolio-marquee-anchor" id="portfolio-marquee-anchor" aria-hidden="true"></div>
         <div class="portfolio-marquee-viewport">
@@ -175,6 +175,8 @@
           </figure>
         </div>
         </div>
+      </div>
+      </div>
       </div>
 
       <div class="portfolio-cta reveal">
